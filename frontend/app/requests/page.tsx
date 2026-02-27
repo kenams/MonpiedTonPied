@@ -1,9 +1,13 @@
-'use client';
+﻿'use client';
+/* eslint-disable react-hooks/set-state-in-effect */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Navigation from '../components/Navigation';
+import Footer from '../components/Footer';
 import { apiUrl } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 type RequestItem = {
     id: string;
@@ -28,7 +32,7 @@ export default function RequestsPage() {
 
     const token = getAuthToken();
 
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         if (!token) return;
         const response = await fetch(apiUrl('/api/requests'), {
             headers: { Authorization: `Bearer ${token}` },
@@ -37,7 +41,7 @@ export default function RequestsPage() {
         if (response.ok) {
             setRequests(data);
         }
-    };
+    }, [token]);
 
     useEffect(() => {
         fetchRequests();
@@ -49,8 +53,21 @@ export default function RequestsPage() {
                 .then((data) => setIsCreator(data.role === 'creator'))
                 .catch(() => {});
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [fetchRequests, token]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const success = params.get('success');
+        const canceled = params.get('canceled');
+
+        if (success === 'request') {
+            setMessage('Demande payee et envoyee au creator.');
+            fetchRequests();
+        } else if (canceled === 'request') {
+            setMessage('Paiement annule. Demande non envoyee.');
+        }
+    }, [fetchRequests]);
 
     const handleAction = async (id: string, action: 'accept' | 'decline') => {
         if (!token) return;
@@ -60,7 +77,7 @@ export default function RequestsPage() {
             headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
-        setMessage(data.message || 'Action effectuée.');
+        setMessage(data.message || 'Action effectuee.');
         fetchRequests();
     };
 
@@ -102,7 +119,7 @@ export default function RequestsPage() {
             }),
         });
         const data = await response.json();
-        setMessage(data.message || 'Livraison enregistrée.');
+        setMessage(data.message || 'Livraison enregistree.');
         fetchRequests();
     };
 
@@ -112,14 +129,14 @@ export default function RequestsPage() {
 
             <div className="max-w-5xl mx-auto px-6 py-12 space-y-8">
                 <div className="space-y-4">
-                    <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">
+                    <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
                         Demandes custom
                     </p>
                     <h1 className="text-4xl font-semibold text-[#f4ede3]">
-                        Gérer les demandes
+                        Gerer les demandes
                     </h1>
                     <p className="text-[#b7ad9c]">
-                        Les créateurs ont 48h pour accepter ou refuser.
+                        Les creators ont 48h pour accepter ou refuser. Contenu uniquement autour des pieds.
                     </p>
                 </div>
 
@@ -143,7 +160,7 @@ export default function RequestsPage() {
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm text-[#b7ad9c]">
                                         {req.creator?.displayName
-                                            ? `Créateur: ${req.creator.displayName}`
+                                            ? `Creator: ${req.creator.displayName}`
                                             : req.consumer?.displayName
                                             ? `Demandeur: ${req.consumer.displayName}`
                                             : 'Demande'}
@@ -154,7 +171,7 @@ export default function RequestsPage() {
                                 </div>
                                 <p className="text-[#f4ede3]">{req.prompt}</p>
                                 <p className="text-sm text-[#b7ad9c]">
-                                    Prix: {req.price}€ · Expire le{' '}
+                                    Prix: {req.price} EUR - Expire le{' '}
                                     {new Date(req.expiresAt).toLocaleDateString()}
                                 </p>
                                 {req.deliveryUrl && (
@@ -162,7 +179,7 @@ export default function RequestsPage() {
                                         href={req.deliveryUrl}
                                         className="text-sm text-[#f0d8ac] font-semibold"
                                     >
-                                        Voir la livraison →
+                                        Voir la livraison -&gt;
                                     </a>
                                 )}
                                 {req.deliveryNote && (
@@ -217,7 +234,7 @@ export default function RequestsPage() {
                                         />
                                         {deliveryUrls[req.id] && (
                                             <p className="text-xs text-[#b7ad9c]">
-                                                Fichier prêt: {deliveryUrls[req.id]}
+                                                Fichier pret: {deliveryUrls[req.id]}
                                             </p>
                                         )}
                                         <button
@@ -225,7 +242,7 @@ export default function RequestsPage() {
                                             disabled={uploading[req.id]}
                                             className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-4 py-2 text-sm font-semibold"
                                         >
-                                            {uploading[req.id] ? 'Upload…' : 'Livrer'}
+                                            {uploading[req.id] ? 'Upload...' : 'Livrer'}
                                         </button>
                                     </div>
                                 )}
@@ -234,6 +251,9 @@ export default function RequestsPage() {
                     )}
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }
+
+

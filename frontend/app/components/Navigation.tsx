@@ -1,17 +1,12 @@
-﻿
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { clearAuthToken, getAuthToken } from '../lib/auth';
 
 export default function Navigation() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [token, setToken] = useState('');
-
-    useEffect(() => {
-        setToken(getAuthToken());
-    }, []);
+    const [token, setToken] = useState(() => getAuthToken());
 
     const handleLogout = () => {
         clearAuthToken();
@@ -25,14 +20,14 @@ export default function Navigation() {
                 <div className="flex justify-between items-center h-20">
                     <Link href="/" className="flex items-center gap-3">
                         <div className="bg-gradient-to-br from-[#c7a46a] to-[#8f6b39] w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg">
-                            <span className="text-[#0b0a0f] font-bold text-lg">👣</span>
+                            <span className="text-[#0b0a0f] font-bold text-lg">MP</span>
                         </div>
                         <div>
                             <span className="text-xl font-semibold text-[#f4ede3]">
                                 MonPiedTonPied
                             </span>
                             <p className="text-xs text-[#b7ad9c]">
-                                Créateurs & collection
+                                Creators and collection
                             </p>
                         </div>
                     </Link>
@@ -42,13 +37,13 @@ export default function Navigation() {
                             href="/browse"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Découvrir
+                            Decouvrir
                         </Link>
                         <Link
                             href="/creators"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Créateurs
+                            Creators
                         </Link>
                         <Link
                             href="/offers"
@@ -73,7 +68,7 @@ export default function Navigation() {
                                 onClick={handleLogout}
                                 className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8] hover:border-[#c7a46a]"
                             >
-                                Se déconnecter
+                                Se deconnecter
                             </button>
                         ) : (
                             <>
@@ -87,7 +82,7 @@ export default function Navigation() {
                                     href="/auth/register"
                                     className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-xs shadow-lg"
                                 >
-                                    S'inscrire
+                                    S&apos;inscrire
                                 </Link>
                             </>
                         )}
@@ -111,14 +106,14 @@ export default function Navigation() {
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Découvrir
+                            Decouvrir
                         </Link>
                         <Link
                             href="/creators"
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Créateurs
+                            Creators
                         </Link>
                         <Link
                             href="/offers"
@@ -146,7 +141,7 @@ export default function Navigation() {
                                 onClick={handleLogout}
                                 className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8]"
                             >
-                                Se déconnecter
+                                Se deconnecter
                             </button>
                         ) : (
                             <>
@@ -162,7 +157,7 @@ export default function Navigation() {
                                     className="inline-flex rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-xs shadow-lg"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
-                                    S'inscrire
+                                    S&apos;inscrire
                                 </Link>
                             </>
                         )}

@@ -14,6 +14,20 @@ const SUBSCRIPTION_PRICE_ID = process.env.STRIPE_PRICE_SUBSCRIPTION_ID;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const PLATFORM_FEE_RATE = 0.2;
 const REQUEST_EXPIRY_HOURS = 48;
+const ALLOWED_RETURN_PREFIXES = ['monpiedtonpied://', 'exp://', 'expo://'];
+
+const resolveReturnUrl = (value, fallback) => {
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (
+            trimmed &&
+            ALLOWED_RETURN_PREFIXES.some((prefix) => trimmed.startsWith(prefix))
+        ) {
+            return trimmed;
+        }
+    }
+    return fallback;
+};
 
 const isMockMode = () => {
     return (
@@ -66,12 +80,20 @@ router.post('/checkout/pass', auth, async (req, res) => {
         }
 
         const customerId = await ensureCustomer(user);
+        const successUrl = resolveReturnUrl(
+            req.body?.successUrl,
+            `${FRONTEND_URL}/profile?success=pass`
+        );
+        const cancelUrl = resolveReturnUrl(
+            req.body?.cancelUrl,
+            `${FRONTEND_URL}/profile?canceled=pass`
+        );
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
             customer: customerId,
             line_items: [{ price: PASS_PRICE_ID, quantity: 1 }],
-            success_url: `${FRONTEND_URL}/profile?success=pass`,
-            cancel_url: `${FRONTEND_URL}/profile?canceled=pass`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             client_reference_id: user._id.toString(),
             metadata: {
                 type: 'pass',
@@ -111,12 +133,20 @@ router.post('/checkout/subscription', auth, async (req, res) => {
         }
 
         const customerId = await ensureCustomer(user);
+        const successUrl = resolveReturnUrl(
+            req.body?.successUrl,
+            `${FRONTEND_URL}/profile?success=subscription`
+        );
+        const cancelUrl = resolveReturnUrl(
+            req.body?.cancelUrl,
+            `${FRONTEND_URL}/profile?canceled=subscription`
+        );
         const session = await stripe.checkout.sessions.create({
             mode: 'subscription',
             customer: customerId,
             line_items: [{ price: SUBSCRIPTION_PRICE_ID, quantity: 1 }],
-            success_url: `${FRONTEND_URL}/profile?success=subscription`,
-            cancel_url: `${FRONTEND_URL}/profile?canceled=subscription`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             client_reference_id: user._id.toString(),
             subscription_data: {
                 metadata: { userId: user._id.toString() },
@@ -184,6 +214,14 @@ router.post('/checkout/content', auth, async (req, res) => {
 
         const customerId = await ensureCustomer(user);
         const unitAmount = Math.round(price * 100);
+        const successUrl = resolveReturnUrl(
+            req.body?.successUrl,
+            `${FRONTEND_URL}/content/${contentId}?success=content`
+        );
+        const cancelUrl = resolveReturnUrl(
+            req.body?.cancelUrl,
+            `${FRONTEND_URL}/content/${contentId}?canceled=content`
+        );
 
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
@@ -200,8 +238,8 @@ router.post('/checkout/content', auth, async (req, res) => {
                     quantity: 1,
                 },
             ],
-            success_url: `${FRONTEND_URL}/content/${contentId}?success=content`,
-            cancel_url: `${FRONTEND_URL}/content/${contentId}?canceled=content`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             client_reference_id: user._id.toString(),
             metadata: {
                 type: 'content',
@@ -320,6 +358,14 @@ router.post('/checkout/request', auth, async (req, res) => {
 
         const customerId = await ensureCustomer(consumer);
         const unitAmount = Math.round(numericPrice * 100);
+        const successUrl = resolveReturnUrl(
+            req.body?.successUrl,
+            `${FRONTEND_URL}/requests?success=request`
+        );
+        const cancelUrl = resolveReturnUrl(
+            req.body?.cancelUrl,
+            `${FRONTEND_URL}/creators/${creatorId}?canceled=request`
+        );
 
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
@@ -336,8 +382,8 @@ router.post('/checkout/request', auth, async (req, res) => {
                     quantity: 1,
                 },
             ],
-            success_url: `${FRONTEND_URL}/requests?success=request`,
-            cancel_url: `${FRONTEND_URL}/creators/${creatorId}?canceled=request`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             client_reference_id: consumer._id.toString(),
             metadata: {
                 type: 'request',

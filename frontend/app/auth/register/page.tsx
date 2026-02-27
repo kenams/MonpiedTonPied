@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
+import Footer from '../../components/Footer';
 
 export default function RegisterChoicePage() {
     return (
@@ -17,8 +18,8 @@ export default function RegisterChoicePage() {
                         Choisis ton type de compte
                     </h1>
                     <p className="text-lg text-[#b7ad9c] max-w-2xl">
-                        Les créateurs publient du contenu. Les consommateurs découvrent,
-                        achètent et discutent avec leurs créateurs favoris.
+                        Les creators publient du contenu. Les consommateurs decouvrent,
+                        achetent et discutent avec leurs creators favoris.
                     </p>
                 </div>
 
@@ -28,16 +29,16 @@ export default function RegisterChoicePage() {
                         className="rounded-3xl bg-white/5 p-8 shadow-lg border border-white/5 hover:border-[#3a2c1a] transition"
                     >
                         <p className="text-xs uppercase tracking-[0.3em] text-[#d8c7a8]">
-                            Créateur
+                            Creator
                         </p>
                         <h2 className="mt-3 text-2xl font-semibold text-[#f4ede3]">
-                            Je publie des photos et vidéos
+                            Je publie des photos et videos
                         </h2>
                         <p className="text-[#b7ad9c] mt-3">
-                            Bio, avatar, profil public, demandes personnalisées.
+                            Bio, avatar, profil public, demandes personnalisees.
                         </p>
                         <span className="mt-6 inline-flex items-center gap-2 text-[#f0d8ac] font-semibold">
-                            Créer un compte créateur →
+                            Creer un compte creator -&gt;
                         </span>
                     </Link>
 
@@ -49,17 +50,18 @@ export default function RegisterChoicePage() {
                             Consommateur
                         </p>
                         <h2 className="mt-3 text-2xl font-semibold text-[#f4ede3]">
-                            Je découvre et j’achète
+                            Je decouvre et j&apos;achete
                         </h2>
                         <p className="text-[#b7ad9c] mt-3">
-                            Accès aux profils, preview gratuit, chat après abonnement.
+                            Acces aux profils, preview gratuit, chat apres abonnement.
                         </p>
                         <span className="mt-6 inline-flex items-center gap-2 text-[#f0d8ac] font-semibold">
-                            Créer un compte consommateur →
+                            Creer un compte consommateur -&gt;
                         </span>
                     </Link>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

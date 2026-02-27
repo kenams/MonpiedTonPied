@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Navigation from '../../components/Navigation';
+import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { getAuthToken } from '../../lib/auth';
 
@@ -32,7 +33,7 @@ export default function CreatorDashboardPage() {
             .then((res) => res.json().then((json) => ({ ok: res.ok, json })))
             .then(({ ok, json }) => {
                 if (!ok) {
-                    setError(json.message || 'Accès refusé.');
+                    setError(json.message || 'Acces refuse.');
                     return;
                 }
                 setData(json);
@@ -46,14 +47,14 @@ export default function CreatorDashboardPage() {
 
             <div className="max-w-6xl mx-auto px-6 py-12 space-y-10">
                 <div className="space-y-4">
-                    <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">
-                        Dashboard créateur
+                    <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
+                        Dashboard creator
                     </p>
                     <h1 className="text-4xl font-semibold text-[#f4ede3]">
-                        Performance & revenus
+                        Performance et revenus
                     </h1>
                     <p className="text-[#b7ad9c]">
-                        Suis tes ventes, demandes custom et revenus nets.
+                        Suis tes ventes, demandes custom et revenus nets. Commission plateforme 20%.
                     </p>
                 </div>
 
@@ -72,14 +73,14 @@ export default function CreatorDashboardPage() {
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             {[
                                 { label: 'Contenus', value: data.contentCount },
-                                { label: 'Ventes brutes', value: `${data.totalSales}€` },
+                                { label: 'Ventes brutes', value: `${data.totalSales} EUR` },
                                 {
-                                    label: 'Revenus créateur',
-                                    value: `${data.totalCreatorRevenue}€`,
+                                    label: 'Revenus creator',
+                                    value: `${data.totalCreatorRevenue} EUR`,
                                 },
                                 {
                                     label: 'Commission plateforme',
-                                    value: `${data.totalPlatformFees}€`,
+                                    value: `${data.totalPlatformFees} EUR`,
                                 },
                             ].map((item) => (
                                 <div
@@ -115,11 +116,11 @@ export default function CreatorDashboardPage() {
 
                             <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-3">
                                 <h2 className="text-xl font-semibold text-[#f4ede3]">
-                                    Dernières demandes
+                                    Dernieres demandes
                                 </h2>
                                 {data.latestRequests.length === 0 ? (
                                     <p className="text-sm text-[#b7ad9c]">
-                                        Aucune demande récente.
+                                        Aucune demande recente.
                                     </p>
                                 ) : (
                                     <ul className="text-sm text-[#b7ad9c] space-y-2">
@@ -129,7 +130,7 @@ export default function CreatorDashboardPage() {
                                                 className="flex justify-between"
                                             >
                                                 <span>{req.status}</span>
-                                                <span>{req.price}€</span>
+                                                <span>{req.price} EUR</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -139,6 +140,7 @@ export default function CreatorDashboardPage() {
                     </>
                 )}
             </div>
+            <Footer />
         </div>
     );
 }

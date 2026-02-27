@@ -15,8 +15,19 @@ const bodyFont = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
     title: 'MonPiedTonPied',
-    description: 'Plateforme communautaire',
+    description: 'Plateforme premium pour createurs et collectionneurs.',
+    openGraph: {
+        title: 'MonPiedTonPied',
+        description: 'Plateforme premium pour createurs et collectionneurs.',
+        type: 'website',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'MonPiedTonPied',
+        description: 'Plateforme premium pour createurs et collectionneurs.',
+    },
 };
 
 export default function RootLayout({

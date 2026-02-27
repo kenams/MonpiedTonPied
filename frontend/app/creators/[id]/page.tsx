@@ -1,9 +1,11 @@
-'use client';
+﻿'use client';
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
+import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { getAuthToken } from '../../lib/auth';
 
@@ -73,7 +75,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
     const handleChat = async () => {
         setMessage(null);
         if (!token) {
-            setMessage('Connecte-toi pour accéder au chat.');
+            setMessage('Connecte-toi pour acceder au chat.');
             return;
         }
         if (!viewer?.subscriptionActive) {
@@ -118,7 +120,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
         if (data.url) {
             window.location.href = data.url;
         } else {
-            setMessage(data.message || 'Demande enregistrée.');
+            setMessage(data.message || 'Demande enregistree.');
             setRequestPrompt('');
             setRequestPrice('');
         }
@@ -126,7 +128,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
 
     const handleSubscribe = async () => {
         if (!token) {
-            setMessage('Connecte-toi pour t’abonner.');
+            setMessage('Connecte-toi pour t\'abonner.');
             return;
         }
         const response = await fetch(apiUrl('/api/stripe/checkout/subscription'), {
@@ -141,7 +143,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
         if (data.url) {
             window.location.href = data.url;
         } else {
-            setMessage(data.message || 'Abonnement activé.');
+            setMessage(data.message || 'Abonnement active.');
             setViewer((prev) => ({ ...(prev || {}), subscriptionActive: true }));
         }
     };
@@ -173,7 +175,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
             setMessage(data.message || 'Signalement impossible.');
             return;
         }
-        setMessage('Signalement envoyé.');
+        setMessage('Signalement envoye.');
         setReportOpen(false);
         setReportReason('');
         setReportDetails('');
@@ -186,6 +188,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                 <div className="flex items-center justify-center h-96">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#c7a46a]"></div>
                 </div>
+                <Footer />
             </div>
         );
     }
@@ -199,6 +202,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                         Ce profil est temporairement suspendu.
                     </div>
                 </div>
+                <Footer />
             </div>
         );
     }
@@ -225,14 +229,14 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                     </div>
                     <div className="flex-1 space-y-2">
                         <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">
-                            Profil créateur
+                            Profil creator
                         </p>
                         <h1 className="text-4xl font-semibold text-[#f4ede3]">
                             {creator.displayName}
                         </h1>
                         {creator.verified && (
                             <span className="inline-flex items-center gap-2 rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1 text-xs text-[#f0d8ac]">
-                                Créateur vérifié
+                                Creator verifie
                             </span>
                         )}
                         <p className="text-[#b7ad9c] max-w-2xl">{creator.bio}</p>
@@ -268,14 +272,14 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                                 Galerie
                             </h2>
                             <span className="text-sm text-[#b7ad9c]">
-                                3 photos visibles, le reste flouté
+                                3 photos visibles, le reste floute
                             </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             {creator.contents.length === 0 && (
                                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-[#b7ad9c]">
-                                    Aucun contenu publié pour le moment.
+                                    Aucun contenu publie pour le moment.
                                 </div>
                             )}
                             {creator.contents.map((item) => (
@@ -293,14 +297,14 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                                                 }`}
                                             />
                                         ) : (
-                                            <div className="h-full w-full flex items-center justify-center text-3xl">
-                                                👣
+                                            <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
+                                                Preview
                                             </div>
                                         )}
                                         {!item.unlocked && (
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                                 <span className="rounded-full bg-[#15131b] px-4 py-2 text-xs font-semibold text-[#f0d8ac] border border-white/10">
-                                                    Contenu verrouillé
+                                                    Contenu verrouille
                                                 </span>
                                             </div>
                                         )}
@@ -316,7 +320,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                                             href={`/content/${item.id}`}
                                             className="inline-flex text-sm font-semibold text-[#f0d8ac]"
                                         >
-                                            Voir la fiche →
+                                            Voir la fiche -&gt;
                                         </Link>
                                     </div>
                                 </div>
@@ -327,24 +331,23 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                     <div className="space-y-6">
                         <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-4">
                             <h3 className="text-lg font-semibold text-[#f4ede3]">
-                                Demande personnalisée
+                                Demande personnalisee
                             </h3>
                             <p className="text-sm text-[#b7ad9c]">
-                                Décris ta demande (pieds uniquement). Le créateur a 48h pour
-                                accepter.
+                                Decris ta demande (pieds uniquement). Le creator a 48h pour repondre.
                             </p>
                             <textarea
                                 value={requestPrompt}
                                 onChange={(event) => setRequestPrompt(event.target.value)}
                                 className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
                                 rows={4}
-                                placeholder="Ex: vidéo pied sur drap satin..."
+                                placeholder="Ex: video pied sur drap satin..."
                             />
                             <input
                                 value={requestPrice}
                                 onChange={(event) => setRequestPrice(event.target.value)}
                                 className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
-                                placeholder="Prix proposé (ex: 29.99)"
+                                placeholder="Prix propose (ex: 29.99)"
                             />
                             <button
                                 onClick={handleRequest}
@@ -361,25 +364,25 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                                 Abonnement
                             </h3>
                             <p className="text-sm text-[#b7ad9c]">
-                                Abonnement = accès complet + chat illimité.
+                                Abonnement = acces complet + chat illimite.
                             </p>
                             <button
                                 onClick={handleSubscribe}
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-sm font-semibold"
                             >
-                                S’abonner 11,99€
+                                S&apos;abonner 11.99 EUR
                             </button>
                             <Link
-                                href="/browse"
+                                href="/offers"
                                 className="inline-flex text-sm font-semibold text-[#f0d8ac]"
                             >
-                                Voir les offres →
+                                Voir les offres -&gt;
                             </Link>
                         </div>
                         <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-[#f4ede3]">
-                                    Modération
+                                    Moderation
                                 </h3>
                                 <button
                                     onClick={() => setReportOpen((prev) => !prev)}
@@ -405,7 +408,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                                         }
                                         className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
                                         rows={3}
-                                        placeholder="Détails"
+                                        placeholder="Details"
                                     />
                                     <button
                                         onClick={handleReport}
@@ -419,6 +422,8 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }
+

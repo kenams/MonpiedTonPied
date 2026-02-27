@@ -12,6 +12,7 @@ dist/
 build/
 out/
 coverage/
+.expo/
 .DS_Store
 .vscode/
 .vs/

@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Navigation from '../../components/Navigation';
+import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { getAuthToken } from '../../lib/auth';
 
@@ -49,7 +50,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         });
         const data = await response.json();
         if (!response.ok) {
-            setError(data.message || 'Message non envoyé.');
+            setError(data.message || 'Message non envoye.');
             return;
         }
         setText('');
@@ -66,7 +67,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                         Chat direct
                     </h1>
                     <p className="text-sm text-[#b7ad9c]">
-                        L’abonnement est requis pour discuter.
+                        Abonnement requis. Moderation active contre les propos abusifs.
                     </p>
                 </div>
 
@@ -98,7 +99,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                             value={text}
                             onChange={(event) => setText(event.target.value)}
                             className="flex-1 rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
-                            placeholder="Écris un message..."
+                            placeholder="Ecris un message..."
                         />
                         <button
                             onClick={handleSend}
@@ -109,6 +110,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

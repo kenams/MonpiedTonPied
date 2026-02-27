@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
+import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { setAuthToken } from '../../lib/auth';
 
@@ -57,8 +58,8 @@ export default function LoginPage() {
                         Heureux de te revoir.
                     </h1>
                     <p className="text-lg text-[#b7ad9c]">
-                        Accède à tes collections, retrouve tes créateurs favoris et
-                        prépare tes prochaines publications.
+                        Accede a tes collections, retrouve tes creators favoris et prepare
+                        tes prochaines publications.
                     </p>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
                         <div className="flex items-center justify-between">
@@ -89,7 +90,7 @@ export default function LoginPage() {
                                 href="/auth/register"
                                 className="text-[#f0d8ac] font-semibold"
                             >
-                                Créer un compte
+                                Creer un compte
                             </Link>
                         </p>
                     </div>
@@ -118,7 +119,7 @@ export default function LoginPage() {
                             value={password}
                             onChange={(event) => setPassword(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a] focus:outline-none focus:ring-2 focus:ring-[#c7a46a]"
-                            placeholder="••••••••"
+                            placeholder="********"
                             required
                         />
                     </label>
@@ -128,10 +129,11 @@ export default function LoginPage() {
                         disabled={loading}
                         className="w-full rounded-xl bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 text-[#0b0a0f] font-semibold shadow-lg transition disabled:opacity-60"
                     >
-                        {loading ? 'Connexion…' : 'Se connecter'}
+                        {loading ? 'Connexion...' : 'Se connecter'}
                     </button>
                 </form>
             </div>
+            <Footer />
         </div>
     );
 }

@@ -1,10 +1,15 @@
-'use client';
+﻿'use client';
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable react-hooks/set-state-in-effect */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
+import Footer from '../components/Footer';
 import { apiUrl } from '../lib/api';
 import { clearAuthToken, getAuthToken } from '../lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 type UserProfile = {
     id: string;
@@ -21,7 +26,7 @@ type UserProfile = {
 };
 
 export default function ProfilePage() {
-    const [token, setToken] = useState('');
+    const [token, setToken] = useState(() => getAuthToken());
     const [user, setUser] = useState<UserProfile | null>(null);
     const [formState, setFormState] = useState({
         displayName: '',
@@ -31,26 +36,45 @@ export default function ProfilePage() {
     const [message, setMessage] = useState<string | null>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-    useEffect(() => {
-        const stored = getAuthToken();
-        setToken(stored);
-        if (!stored) return;
+    const loadProfile = useCallback(async () => {
+        if (!token) return;
+        try {
+            const res = await fetch(apiUrl('/api/users/me'), {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) return;
+            setUser(data);
+            setFormState({
+                displayName: data.displayName || '',
+                bio: data.bio || '',
+                avatarUrl: data.avatarUrl || '',
+            });
+        } catch {
+            // ignore
+        }
+    }, [token]);
 
-        fetch(apiUrl('/api/users/me'), {
-            headers: { Authorization: `Bearer ${stored}` },
-        })
-            .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
-            .then(({ ok, data }) => {
-                if (!ok) return;
-                setUser(data);
-                setFormState({
-                    displayName: data.displayName || '',
-                    bio: data.bio || '',
-                    avatarUrl: data.avatarUrl || '',
-                });
-            })
-            .catch(() => {});
-    }, []);
+    useEffect(() => {
+        loadProfile();
+    }, [loadProfile]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const success = params.get('success');
+        const canceled = params.get('canceled');
+
+        if (success === 'pass') {
+            setMessage('Pass active. Acces premium 30 jours.');
+            loadProfile();
+        } else if (success === 'subscription') {
+            setMessage('Abonnement active. Chat et contenu debloques.');
+            loadProfile();
+        } else if (canceled === 'pass' || canceled === 'subscription') {
+            setMessage('Paiement annule. Aucun changement applique.');
+        }
+    }, [loadProfile]);
 
     const handleLogout = () => {
         clearAuthToken();
@@ -75,7 +99,7 @@ export default function ProfilePage() {
             return;
         }
         setUser(data);
-        setMessage('Profil mis à jour.');
+        setMessage('Profil mis a jour.');
     };
 
     const handleAvatarUpload = async (file: File | null) => {
@@ -93,13 +117,17 @@ export default function ProfilePage() {
             setMessage(data.message || 'Upload impossible.');
         } else {
             setFormState((prev) => ({ ...prev, avatarUrl: data.url }));
-            setUser((prev) =>
-                prev ? { ...prev, avatarUrl: data.url } : prev
-            );
-            setMessage('Avatar mis à jour.');
+            setUser((prev) => (prev ? { ...prev, avatarUrl: data.url } : prev));
+            setMessage('Avatar mis a jour.');
         }
         setUploadingAvatar(false);
     };
+
+    const planLabel = user?.subscriptionActive
+        ? 'Abonnement actif'
+        : user?.accessPassActive
+        ? 'Pass actif'
+        : 'Aucun plan actif';
 
     return (
         <div className="min-h-screen">
@@ -108,16 +136,16 @@ export default function ProfilePage() {
             <div className="max-w-6xl mx-auto px-6 py-12 space-y-10">
                 <div className="glass rounded-3xl p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
                     <div className="space-y-3">
-                        <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">
-                            Mon espace
+                        <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
+                            Espace personnel
                         </p>
                         <h1 className="text-4xl font-semibold text-[#f4ede3]">
                             {user ? user.displayName : 'Profil personnel'}
                         </h1>
                         <p className="text-[#b7ad9c] max-w-xl">
                             {user?.role === 'creator'
-                                ? 'Gère ta vitrine publique et tes demandes custom.'
-                                : 'Gère tes favoris, tes accès premium et tes achats.'}
+                                ? 'Gere ta vitrine publique, tes demandes custom et tes revenus.'
+                                : 'Gere tes favoris, tes acces premium et tes achats.'}
                         </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -142,7 +170,7 @@ export default function ProfilePage() {
                                 onClick={handleLogout}
                                 className="rounded-full border border-white/15 px-6 py-3 font-semibold text-sm text-[#d6cbb8]"
                             >
-                                Se déconnecter
+                                Se deconnecter
                             </button>
                         ) : (
                             <Link
@@ -157,11 +185,11 @@ export default function ProfilePage() {
 
                 {!token && (
                     <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 text-[#f0d8ac]">
-                        Tu n’es pas connecté.{' '}
+                        Tu n&apos;es pas connecte.{' '}
                         <Link href="/auth/login" className="font-semibold underline">
                             Connecte-toi
                         </Link>{' '}
-                        pour accéder à ton profil.
+                        pour acceder a ton profil.
                     </div>
                 )}
 
@@ -224,7 +252,7 @@ export default function ProfilePage() {
                                     placeholder="ou colle une URL"
                                 />
                                 {uploadingAvatar && (
-                                    <p className="text-xs text-[#b7ad9c]">Upload en cours…</p>
+                                    <p className="text-xs text-[#b7ad9c]">Upload en cours...</p>
                                 )}
                             </div>
                             {user.role === 'creator' && (
@@ -255,37 +283,42 @@ export default function ProfilePage() {
                             <h3 className="text-lg font-semibold text-[#f4ede3]">
                                 Statut
                             </h3>
-                            <p className="text-sm text-[#b7ad9c]">
-                                Âge vérifié: {user.ageVerified ? 'oui' : 'non'}
-                            </p>
-                            <p className="text-sm text-[#b7ad9c]">
-                                Pass actif: {user.accessPassActive ? 'oui' : 'non'}
-                            </p>
-                            <p className="text-sm text-[#b7ad9c]">
-                                Abonnement: {user.subscriptionActive ? 'actif' : 'inactif'}
-                            </p>
-                            {user.role === 'creator' && (
-                                <p className="text-sm text-[#b7ad9c]">
-                                    Vérifié: {user.verifiedCreator ? 'oui' : 'non'}
-                                </p>
-                            )}
+                            <div className="space-y-2 text-sm text-[#b7ad9c]">
+                                <p>Age verifie: {user.ageVerified ? 'oui' : 'non'}</p>
+                                <p>Plan: {planLabel}</p>
+                                <p>Role: {user.role}</p>
+                                {user.role === 'creator' && (
+                                    <p>Creator verifie: {user.verifiedCreator ? 'oui' : 'non'}</p>
+                                )}
+                            </div>
                             {user.isSuspended && (
                                 <p className="text-sm text-[#f0d8ac]">
                                     Profil suspendu temporairement
                                 </p>
                             )}
-                            {user.role === 'creator' && (
+                            {user.role === 'creator' ? (
                                 <Link
                                     href="/requests"
                                     className="inline-flex text-sm font-semibold text-[#f0d8ac]"
                                 >
-                                    Voir les demandes custom →
+                                    Voir les demandes custom -&gt;
+                                </Link>
+                            ) : (
+                                <Link
+                                    href="/offers"
+                                    className="inline-flex text-sm font-semibold text-[#f0d8ac]"
+                                >
+                                    Voir les offres -&gt;
                                 </Link>
                             )}
                         </div>
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 }
+
+
+

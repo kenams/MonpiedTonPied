@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '../../../components/Navigation';
+import Footer from '../../../components/Footer';
 import { apiUrl } from '../../../lib/api';
 import { setAuthToken } from '../../../lib/auth';
 
@@ -72,11 +73,11 @@ export default function ConsumerRegisterPage() {
                         Compte consommateur
                     </p>
                     <h1 className="text-4xl font-semibold text-[#f4ede3]">
-                        Découvre les créateurs, en toute confiance.
+                        Decouvre les creators, en toute confiance.
                     </h1>
                     <p className="text-[#b7ad9c]">
-                        Accès aux profils, 3 photos visibles par créateur, puis contenu
-                        flouté. Le chat s’ouvre après abonnement.
+                        Acces aux profils, 3 photos visibles par creator, puis contenu
+                        floute. Le chat s&apos;ouvre apres abonnement.
                     </p>
                 </div>
 
@@ -86,7 +87,7 @@ export default function ConsumerRegisterPage() {
                             Inscription consommateur
                         </h2>
                         <p className="text-sm text-[#b7ad9c]">
-                            Déjà un compte ?{' '}
+                            Deja un compte ?{' '}
                             <Link href="/auth/login" className="text-[#f0d8ac] font-semibold">
                                 Se connecter
                             </Link>
@@ -111,7 +112,7 @@ export default function ConsumerRegisterPage() {
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Nom d’utilisateur</span>
+                        <span className="text-sm text-[#b7ad9c]">Nom d&apos;utilisateur</span>
                         <input
                             value={username}
                             onChange={(event) => setUsername(event.target.value)}
@@ -162,7 +163,7 @@ export default function ConsumerRegisterPage() {
                             value={password}
                             onChange={(event) => setPassword(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
-                            placeholder="Minimum 8 caractères"
+                            placeholder="Minimum 8 caracteres"
                             required
                         />
                     </label>
@@ -172,10 +173,11 @@ export default function ConsumerRegisterPage() {
                         disabled={loading}
                         className="w-full rounded-xl bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 text-[#0b0a0f] font-semibold shadow-lg transition disabled:opacity-60"
                     >
-                        {loading ? 'Création…' : 'Créer mon compte consommateur'}
+                        {loading ? 'Creation...' : 'Creer mon compte consommateur'}
                     </button>
                 </form>
             </div>
+            <Footer />
         </div>
     );
 }

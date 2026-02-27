@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '../../../components/Navigation';
+import Footer from '../../../components/Footer';
 import { apiUrl } from '../../../lib/api';
 import { setAuthToken } from '../../../lib/auth';
 
@@ -71,28 +72,28 @@ export default function CreatorRegisterPage() {
             <div className="max-w-5xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
                 <div className="space-y-5">
                     <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">
-                        Compte créateur
+                        Compte creator
                     </p>
                     <h1 className="text-4xl font-semibold text-[#f4ede3]">
-                        Ton univers mérite une vitrine premium.
+                        Ton univers merite une vitrine premium.
                     </h1>
                     <p className="text-[#b7ad9c]">
-                        Ajoute une bio claire, un pseudo mémorable et confirme ton âge.
-                        Les demandes custom respectent la thématique pieds.
+                        Ajoute une bio claire, un pseudo memorable et confirme ton age.
+                        Les demandes custom respectent la thematique pieds.
                     </p>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-[#b7ad9c]">
-                        <p>Charte: pas de contenu hors thématique pieds.</p>
-                        <p>Réponse aux demandes custom sous 48h.</p>
+                        <p>Charte: pas de contenu hors thematique pieds.</p>
+                        <p>Reponse aux demandes custom sous 48h.</p>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="glass rounded-3xl p-8 space-y-5">
                     <div>
                         <h2 className="text-2xl font-semibold text-[#f4ede3]">
-                            Inscription créateur
+                            Inscription creator
                         </h2>
                         <p className="text-sm text-[#b7ad9c]">
-                            Déjà un compte ?{' '}
+                            Deja un compte ?{' '}
                             <Link href="/auth/login" className="text-[#f0d8ac] font-semibold">
                                 Se connecter
                             </Link>
@@ -117,7 +118,7 @@ export default function CreatorRegisterPage() {
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Nom d’utilisateur</span>
+                        <span className="text-sm text-[#b7ad9c]">Nom d&apos;utilisateur</span>
                         <input
                             value={username}
                             onChange={(event) => setUsername(event.target.value)}
@@ -156,7 +157,7 @@ export default function CreatorRegisterPage() {
                             onChange={(event) => setBio(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
                             rows={4}
-                            placeholder="Parle de ton univers, de ta lumière, de ton style."
+                            placeholder="Parle de ton univers, de ta lumiere, de ton style."
                         />
                     </label>
 
@@ -179,7 +180,7 @@ export default function CreatorRegisterPage() {
                             value={password}
                             onChange={(event) => setPassword(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
-                            placeholder="Minimum 8 caractères"
+                            placeholder="Minimum 8 caracteres"
                             required
                         />
                     </label>
@@ -189,10 +190,11 @@ export default function CreatorRegisterPage() {
                         disabled={loading}
                         className="w-full rounded-xl bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 text-[#0b0a0f] font-semibold shadow-lg transition disabled:opacity-60"
                     >
-                        {loading ? 'Création…' : 'Créer mon compte créateur'}
+                        {loading ? 'Creation...' : 'Creer mon compte creator'}
                     </button>
                 </form>
             </div>
+            <Footer />
         </div>
     );
 }
