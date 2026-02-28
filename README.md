@@ -52,5 +52,12 @@ Frontend (`frontend/.env.local`):
 3) Deployer le backend (Render, Railway, Fly, VPS).
 4) Mettre `FRONTEND_URLS` avec les domaines web.
 
+## Stockage medias (etape 2)
+Par defaut, les uploads sont locaux (`backend/uploads`).
+Pour un stockage scalable:
+1) Creer un compte Cloudinary.
+2) Renseigner `CLOUDINARY_URL` ou le triplet `CLOUDINARY_*`.
+3) Redemarrer le backend.
+
 ## Mobile (plus tard)
 L'application mobile est dans `mobile/` (Expo).
