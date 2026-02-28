@@ -777,6 +777,18 @@ function ProfileScreen({ navigation }: { navigation: any }) {
               <Text style={styles.mutedText}>
                 Abonnement: {profile?.subscriptionActive ? "actif" : "non"}
               </Text>
+              {profile?.subscriptionActive && (
+                <TouchableOpacity
+                  style={styles.ghostBtn}
+                  onPress={() =>
+                    openCheckout("/api/stripe/portal", token, {
+                      successPath: "profile",
+                    })
+                  }
+                >
+                  <Text style={styles.ghostBtnText}>Gerer mon abonnement</Text>
+                </TouchableOpacity>
+              )}
               {profile?.role === "creator" && (
                 <TouchableOpacity
                   style={styles.ghostBtn}

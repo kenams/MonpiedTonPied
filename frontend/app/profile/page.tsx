@@ -123,6 +123,29 @@ export default function ProfilePage() {
         setUploadingAvatar(false);
     };
 
+    const handleManageSubscription = async () => {
+        if (!token) return;
+        setMessage(null);
+        const response = await fetch(apiUrl('/api/stripe/portal'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                returnUrl: `${window.location.origin}/profile`,
+            }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            setMessage(data.message || 'Portail Stripe indisponible.');
+            return;
+        }
+        if (data.url) {
+            window.location.href = data.url;
+        }
+    };
+
     const planLabel = user?.subscriptionActive
         ? 'Abonnement actif'
         : user?.accessPassActive
@@ -295,6 +318,14 @@ export default function ProfilePage() {
                                 <p className="text-sm text-[#f0d8ac]">
                                     Profil suspendu temporairement
                                 </p>
+                            )}
+                            {user.subscriptionActive && (
+                                <button
+                                    onClick={handleManageSubscription}
+                                    className="rounded-full border border-[#3a2c1a] px-5 py-2 text-sm font-semibold text-[#f0d8ac] mt-2"
+                                >
+                                    Gerer mon abonnement
+                                </button>
                             )}
                             {user.role === 'creator' ? (
                                 <Link

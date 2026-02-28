@@ -402,6 +402,41 @@ router.post('/checkout/request', auth, async (req, res) => {
     }
 });
 
+router.post('/portal', auth, async (req, res) => {
+    try {
+        if (isMockMode()) {
+            return res.json({
+                mock: true,
+                message: 'Portail indisponible en mode mock.',
+            });
+        }
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return res.status(500).json({ message: 'Stripe non configure.' });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur introuvable.' });
+        }
+
+        const customerId = await ensureCustomer(user);
+        const returnUrl = resolveReturnUrl(
+            req.body?.returnUrl || req.body?.successUrl,
+            `${FRONTEND_URL}/profile`
+        );
+
+        const portalSession = await stripe.billingPortal.sessions.create({
+            customer: customerId,
+            return_url: returnUrl,
+        });
+
+        return res.json({ url: portalSession.url });
+    } catch (error) {
+        console.error('Stripe portal error:', error);
+        return res.status(500).json({ message: 'Erreur Stripe.' });
+    }
+});
+
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     let event;
     try {
