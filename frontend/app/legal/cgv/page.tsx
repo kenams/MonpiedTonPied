@@ -20,6 +20,11 @@ export default function CGVPage() {
                         Pass 5,99 EUR (30 jours) ou abonnement 11,99 EUR. L&apos;achat
                         a l&apos;unite est fixe par chaque createur.
                     </p>
+                    <ul className="text-sm text-[#b7ad9c] space-y-2">
+                        <li>Pass: acces complet aux collections pendant 30 jours.</li>
+                        <li>Abonnement: acces complet + chat illimite.</li>
+                        <li>A l&apos;unite: prix libre par createur.</li>
+                    </ul>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
@@ -28,6 +33,11 @@ export default function CGVPage() {
                         Les paiements sont securises et traites par Stripe. L&apos;acces
                         est active apres validation du paiement.
                     </p>
+                    <ul className="text-sm text-[#b7ad9c] space-y-2">
+                        <li>Transactions en EUR.</li>
+                        <li>Facture disponible dans le profil.</li>
+                        <li>En cas d&apos;echec, l&apos;acces reste bloque.</li>
+                    </ul>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
@@ -40,7 +50,16 @@ export default function CGVPage() {
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">4. Remboursements</h2>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">4. Demandes personnalisees</h2>
+                    <p className="text-[#b7ad9c]">
+                        Le consommateur peut commander un contenu sur demande. Le
+                        createur dispose de 48h pour repondre. Le contenu doit rester
+                        strictement autour des pieds.
+                    </p>
+                </section>
+
+                <section className="glass rounded-3xl p-8 space-y-4">
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">5. Remboursements</h2>
                     <p className="text-[#b7ad9c]">
                         Les remboursements sont examines au cas par cas selon les
                         politiques en vigueur et le respect de la charte.

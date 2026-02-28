@@ -39,6 +39,7 @@ export default function Home() {
                             <span>Edition luxe</span>
                             <span>Acces immediat</span>
                             <span>Respect et securite</span>
+                            <span>18+ uniquement</span>
                         </div>
                     </div>
 
