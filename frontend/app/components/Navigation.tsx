@@ -37,7 +37,7 @@ export default function Navigation() {
                             href="/browse"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Decouvrir
+                            Galerie
                         </Link>
                         <Link
                             href="/creators"
@@ -106,7 +106,7 @@ export default function Navigation() {
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Decouvrir
+                            Galerie
                         </Link>
                         <Link
                             href="/creators"
