@@ -17,10 +17,23 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import * as Linking from "expo-linking";
 
-const API_BASE = (process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000").replace(
-  /\/$/,
-  ""
-);
+const resolveApiBase = () => {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl && !envUrl.includes("localhost")) {
+    return envUrl.replace(/\/$/, "");
+  }
+
+  const expoUrl = Linking.createURL("/");
+  const hostMatch = expoUrl.match(/:\/\/([^/:]+)/);
+  const host = hostMatch?.[1];
+  if (host) {
+    return `http://${host}:5000`;
+  }
+
+  return (envUrl || "http://localhost:5000").replace(/\/$/, "");
+};
+
+const API_BASE = resolveApiBase();
 const TOKEN_KEY = "mptp_token";
 
 const Tab = createBottomTabNavigator();
