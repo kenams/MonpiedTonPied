@@ -204,10 +204,12 @@ function HomeScreen({ navigation }: { navigation: { navigate: (name: string) => 
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.navBar}>
-            <View style={styles.logoMark} />
+            <View style={styles.logoMark}>
+              <Text style={styles.logoText}>KP</Text>
+            </View>
             <View>
               <Text style={styles.brand}>MonPiedTonPied</Text>
-              <Text style={styles.brandSub}>Collectors Club</Text>
+              <Text style={styles.brandSub}>Collectors Club · Kah-Prod</Text>
             </View>
           </View>
 
@@ -267,6 +269,9 @@ function HomeScreen({ navigation }: { navigation: { navigate: (name: string) => 
                 <Text style={styles.infoText}>{item.text}</Text>
               </View>
             ))}
+          </View>
+          <View style={styles.kahProdBadge}>
+            <Text style={styles.kahProdText}>Developed by Kah-Prod</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -1002,6 +1007,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(212,175,55,0.2)",
     borderWidth: 1,
     borderColor: "rgba(212,175,55,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoText: {
+    color: "#f4ede3",
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: 2,
   },
   brand: {
     color: "#f4ede3",
@@ -1124,6 +1137,16 @@ const styles = StyleSheet.create({
   },
   threeCol: {
     gap: 14,
+  },
+  kahProdBadge: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  kahProdText: {
+    color: "#7f776a",
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
   },
   infoCard: {
     padding: 18,

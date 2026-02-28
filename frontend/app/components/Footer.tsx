@@ -12,6 +12,7 @@ export default function Footer() {
                     <p className="text-xs text-[#7f776a]">
                         Moderation active et acces securise.
                     </p>
+                    <p className="text-xs text-[#7f776a]">Developed by Kah-Prod.</p>
                 </div>
                 <div className="space-y-2">
                     <p className="text-[#f4ede3] font-semibold">Legal</p>

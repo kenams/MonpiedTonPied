@@ -27,7 +27,7 @@ export default function Navigation() {
                                 MonPiedTonPied
                             </span>
                             <p className="text-xs text-[#b7ad9c]">
-                                Creators and collection
+                                Creators and collection · by Kah-Prod
                             </p>
                         </div>
                     </Link>
