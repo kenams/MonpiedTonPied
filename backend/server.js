@@ -16,9 +16,26 @@ const io = socketIo(server, {
 });
 
 // Middleware
+const normalizeOrigin = (value) => value.replace(/\/$/, '');
+const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map(normalizeOrigin);
+
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+        origin: (origin, callback) => {
+            if (!origin) {
+                return callback(null, true);
+            }
+            const normalized = normalizeOrigin(origin);
+            if (allowedOrigins.includes(normalized)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Not allowed by CORS'));
+        },
+        credentials: true,
     })
 );
 app.use((req, res, next) => {

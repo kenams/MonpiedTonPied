@@ -38,11 +38,19 @@ Backend (`backend/.env`):
 - `MONGODB_URI`
 - `JWT_SECRET`
 - `FRONTEND_URL`
+- `FRONTEND_URLS` (liste separée par virgules)
+- `PUBLIC_BASE_URL`
 - `PORT`
 
 Frontend (`frontend/.env.local`):
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_SITE_URL`
+
+## Production (etape 1)
+1) Creer un cluster MongoDB Atlas.
+2) Renseigner `backend/.env.production.example`.
+3) Deployer le backend (Render, Railway, Fly, VPS).
+4) Mettre `FRONTEND_URLS` avec les domaines web.
 
 ## Mobile (plus tard)
 L'application mobile est dans `mobile/` (Expo).
