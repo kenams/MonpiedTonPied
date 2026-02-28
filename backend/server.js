@@ -1,12 +1,15 @@
 ﻿const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 require('dotenv').config();
 
 const app = express();
+app.set('trust proxy', process.env.TRUST_PROXY === 'true');
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
@@ -16,6 +19,30 @@ const io = socketIo(server, {
 });
 
 // Middleware
+app.use(
+    helmet({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+        crossOriginEmbedderPolicy: false,
+    })
+);
+
+const rateWindowMs = Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000);
+const rateMax = Number(process.env.RATE_LIMIT_MAX || 100);
+const rateAuthMax = Number(process.env.RATE_LIMIT_AUTH_MAX || 10);
+
+const apiLimiter = rateLimit({
+    windowMs: rateWindowMs,
+    max: rateMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+    windowMs: rateWindowMs,
+    max: rateAuthMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 const normalizeOrigin = (value) => value.replace(/\/$/, '');
 const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || 'http://localhost:3000')
     .split(',')
@@ -45,6 +72,8 @@ app.use((req, res, next) => {
     return express.json()(req, res, next);
 });
 
+app.use('/api', apiLimiter);
+
 // Route de test
 app.get('/', (req, res) => {
     res.json({ message: 'Bienvenue sur MonPiedTonPied API!' });
@@ -63,7 +92,7 @@ const stripeRoutes = require('./routes/stripe');
 const reportRoutes = require('./routes/reports');
 const dashboardRoutes = require('./routes/dashboard');
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/billing', billingRoutes);

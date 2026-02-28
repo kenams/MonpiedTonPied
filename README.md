@@ -71,5 +71,11 @@ Pour un stockage scalable:
    - Events: `checkout.session.completed`, `invoice.paid`, `customer.subscription.deleted`
 4) Activer le portail Stripe (optionnel) pour la gestion des abonnements.
 
+## Securite & conformité (etape 4)
+1) Rate limiting active (`RATE_LIMIT_*`).
+2) Helmet (headers securite).
+3) Verification email (a ajouter si besoin).
+4) Moderation et signalements deja presents.
+
 ## Mobile (plus tard)
 L'application mobile est dans `mobile/` (Expo).
