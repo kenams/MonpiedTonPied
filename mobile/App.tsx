@@ -205,7 +205,12 @@ function HomeScreen({ navigation }: { navigation: { navigate: (name: string) => 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.navBar}>
             <View style={styles.logoMark}>
-              <Text style={styles.logoText}>KP</Text>
+              <View style={[styles.toe, styles.toeOne]} />
+              <View style={[styles.toe, styles.toeTwo]} />
+              <View style={[styles.toe, styles.toeThree]} />
+              <View style={[styles.toe, styles.toeFour]} />
+              <View style={[styles.toe, styles.toeFive]} />
+              <View style={styles.sole} />
             </View>
             <View>
               <Text style={styles.brand}>MonPiedTonPied</Text>
@@ -1007,14 +1012,49 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(212,175,55,0.2)",
     borderWidth: 1,
     borderColor: "rgba(212,175,55,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
+    position: "relative",
   },
-  logoText: {
-    color: "#f4ede3",
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 2,
+  toe: {
+    position: "absolute",
+    width: 6,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#c7a46a",
+  },
+  toeOne: {
+    top: 6,
+    left: 10,
+  },
+  toeTwo: {
+    top: 4,
+    left: 18,
+    width: 7,
+    height: 7,
+  },
+  toeThree: {
+    top: 6,
+    left: 27,
+  },
+  toeFour: {
+    top: 12,
+    left: 32,
+    width: 5,
+    height: 5,
+  },
+  toeFive: {
+    top: 12,
+    left: 6,
+    width: 5,
+    height: 5,
+  },
+  sole: {
+    position: "absolute",
+    bottom: 6,
+    left: 14,
+    width: 18,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#c7a46a",
   },
   brand: {
     color: "#f4ede3",

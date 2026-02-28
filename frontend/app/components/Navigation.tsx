@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { clearAuthToken, getAuthToken } from '../lib/auth';
+import LogoMark from './LogoMark';
 
 export default function Navigation() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,9 +20,7 @@ export default function Navigation() {
             <div className="max-w-7xl mx-auto px-6">
                 <div className="flex justify-between items-center h-20">
                     <Link href="/" className="flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-[#c7a46a] to-[#8f6b39] w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg">
-                            <span className="text-[#0b0a0f] font-bold text-lg">MP</span>
-                        </div>
+                        <LogoMark size={44} />
                         <div>
                             <span className="text-xl font-semibold text-[#f4ede3]">
                                 MonPiedTonPied
