@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import CTASection from '../components/CTASection';
 import { apiUrl } from '../lib/api';
 
 type CreatorItem = {
@@ -186,6 +187,14 @@ export default function CreatorsPage() {
                         ))}
                     </div>
                 )}
+                <CTASection
+                    title="Lance ton profil creator."
+                    subtitle="Bio, avatar, verification age et publication rapide. Tout est pret."
+                    primaryLabel="Devenir creator"
+                    primaryHref="/auth/register/creator"
+                    secondaryLabel="Voir les offres"
+                    secondaryHref="/offers"
+                />
             </div>
             <Footer />
         </div>

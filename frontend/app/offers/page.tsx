@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import CTASection from '../components/CTASection';
 import { apiUrl } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
 
@@ -149,6 +150,12 @@ export default function OffersPage() {
                         </p>
                     </div>
                 </div>
+                <CTASection
+                    title="Active ton acces maintenant."
+                    subtitle="Pass 5.99 EUR ou abonnement 11.99 EUR. Acces immediat aux collections."
+                    primaryLabel="Creer un compte"
+                    primaryHref="/auth/register"
+                />
             </div>
             <Footer />
         </div>

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import CTASection from '../components/CTASection';
 import { apiUrl } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
 
@@ -270,6 +271,12 @@ export default function BrowsePage() {
                         })}
                     </div>
                 )}
+                <CTASection
+                    title="Accede aux collections completes."
+                    subtitle="Le pass ou l'abonnement debloquent les series premium et le chat."
+                    primaryLabel="Voir les offres"
+                    primaryHref="/offers"
+                />
             </div>
             <Footer />
         </div>
