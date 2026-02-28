@@ -1,7 +1,7 @@
 ﻿'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -22,36 +22,26 @@ export default function CreatorsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        let isMounted = true;
-
-        fetch(apiUrl('/api/creators'))
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error('HTTP error');
-                }
-                return res.json();
-            })
-            .then((data) => {
-                if (isMounted) {
-                    setCreators(data || []);
-                }
-            })
-            .catch(() => {
-                if (isMounted) {
-                    setError('Impossible de charger les creators pour le moment.');
-                }
-            })
-            .finally(() => {
-                if (isMounted) {
-                    setLoading(false);
-                }
-            });
-
-        return () => {
-            isMounted = false;
-        };
+    const fetchCreators = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await fetch(apiUrl('/api/creators'));
+            if (!res.ok) {
+                throw new Error('HTTP error');
+            }
+            const data = await res.json();
+            setCreators(Array.isArray(data) ? data : []);
+        } catch {
+            setError('Impossible de charger les creators pour le moment.');
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchCreators();
+    }, [fetchCreators]);
 
     return (
         <div className="min-h-screen">
@@ -117,8 +107,14 @@ export default function CreatorsPage() {
                 </div>
 
                 {error && (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                        {error}
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <span>{error}</span>
+                        <button
+                            onClick={fetchCreators}
+                            className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac]"
+                        >
+                            Reessayer
+                        </button>
                     </div>
                 )}
 

@@ -1,7 +1,7 @@
 ﻿'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -42,43 +42,33 @@ export default function BrowsePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        let isMounted = true;
+    const fetchContent = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const token = getAuthToken();
+            const response = await fetch(apiUrl('/api/content'), {
+                method: 'GET',
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            });
 
-        const fetchContent = async () => {
-            try {
-                const token = getAuthToken();
-                const response = await fetch(apiUrl('/api/content'), {
-                    method: 'GET',
-                    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                const data = (await response.json()) as ContentItem[];
-                if (isMounted) {
-                    setContent(data);
-                }
-            } catch (err) {
-                console.error('Error fetching content:', err);
-                if (isMounted) {
-                    setError('Impossible de charger le contenu pour le moment.');
-                }
-            } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
             }
-        };
 
-        fetchContent();
-
-        return () => {
-            isMounted = false;
-        };
+            const data = (await response.json()) as ContentItem[];
+            setContent(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('Error fetching content:', err);
+            setError('Impossible de charger le contenu pour le moment.');
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchContent();
+    }, [fetchContent]);
 
     if (loading) {
         return (
@@ -184,8 +174,14 @@ export default function BrowsePage() {
                 </div>
 
                 {error && (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                        {error}
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <span>{error}</span>
+                        <button
+                            onClick={fetchContent}
+                            className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac]"
+                        >
+                            Reessayer
+                        </button>
                     </div>
                 )}
 
