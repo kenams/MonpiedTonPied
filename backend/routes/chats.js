@@ -24,6 +24,43 @@ const containsBlockedText = (text) => {
     return blocked.some((word) => lower.includes(word));
 };
 
+const containsContactInfo = (text) => {
+    const lower = text.toLowerCase();
+    const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+    const phonePattern = /(?:\+?\d[\d\s().-]{6,}\d)/;
+    const urlPattern = /(https?:\/\/|www\.)/i;
+    const handlePattern = /(?:^|\s)@[a-z0-9._]{3,}/i;
+    const keywords = [
+        'snap',
+        'snapchat',
+        'insta',
+        'instagram',
+        'whatsapp',
+        'whats app',
+        'telegram',
+        't.me',
+        'discord',
+        'skype',
+        'facebook',
+        'fb',
+        'tiktok',
+        'onlyfans',
+        'twitter',
+        'x.com',
+        'signal',
+        'wechat',
+        'line',
+        'viber',
+        'kik',
+    ];
+
+    if (emailPattern.test(text)) return true;
+    if (phonePattern.test(text)) return true;
+    if (urlPattern.test(text)) return true;
+    if (handlePattern.test(text)) return true;
+    return keywords.some((word) => lower.includes(word));
+};
+
 router.get('/', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
@@ -162,6 +199,12 @@ router.post('/:chatId/messages', auth, async (req, res) => {
         }
         if (containsBlockedText(text)) {
             return res.status(400).json({ message: 'Message non autorisé.' });
+        }
+        if (containsContactInfo(text)) {
+            return res.status(400).json({
+                message:
+                    'Les coordonnées (tel, email, réseaux sociaux, liens) sont interdites.',
+            });
         }
 
         const message = await Message.create({

@@ -28,7 +28,7 @@ const isAdult = (birthDate) => {
 const normalizeProfile = ({ displayName, bio, avatarUrl }) => ({
     displayName: displayName ? displayName.trim() : undefined,
     bio: bio ? bio.trim() : '',
-    avatarUrl: avatarUrl || '/default-avatar.png',
+    avatarUrl: avatarUrl || '/default-avatar.svg',
 });
 
 router.post('/register/creator', async (req, res) => {

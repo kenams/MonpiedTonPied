@@ -179,6 +179,34 @@ export default function CreatorProfilePage({
         }
     };
 
+    const handlePass = async () => {
+        if (!token) {
+            setMessage('Connecte-toi pour activer un pass.');
+            return;
+        }
+        const successUrl = `${window.location.origin}/creators/${id}?success=pass`;
+        const cancelUrl = `${window.location.origin}/creators/${id}?canceled=pass`;
+        const response = await fetch(apiUrl('/api/stripe/checkout/pass'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ successUrl, cancelUrl }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            setMessage(data.message || 'Pass impossible.');
+            return;
+        }
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            setMessage(data.message || 'Pass active.');
+            setViewer((prev) => ({ ...(prev || {}), accessPassActive: true }));
+        }
+    };
+
     useEffect(() => {
         if (typeof window === 'undefined') return;
         if (!token || autoChatTriggered) return;
@@ -205,8 +233,18 @@ export default function CreatorProfilePage({
                 .catch(() => {
                     setMessage('Impossible de verifier l\'abonnement.');
                 });
+        } else if (success === 'pass') {
+            setMessage('Pass actif. Acces complet aux galeries.');
+            fetch(apiUrl('/api/users/me'), {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((res) => res.json())
+                .then((data) => setViewer(data))
+                .catch(() => {});
         } else if (canceled === 'subscription') {
             setMessage('Paiement annule. Abonnement non active.');
+        } else if (canceled === 'pass') {
+            setMessage('Paiement annule. Pass non active.');
         }
     }, [token, autoChatTriggered, startChat]);
 
@@ -459,6 +497,31 @@ export default function CreatorProfilePage({
                                 );
                             })}
                         </div>
+
+                        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
+                            {!token ? (
+                                <Link
+                                    href={`/auth/login?redirect=/creators/${id}`}
+                                    className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
+                                >
+                                    Se connecter pour debloquer
+                                </Link>
+                            ) : viewer?.subscriptionActive ? (
+                                <button
+                                    onClick={handleChat}
+                                    className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
+                                >
+                                    Ouvrir le chat
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleSubscribe}
+                                    className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
+                                >
+                                    S&apos;abonner pour debloquer
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="space-y-6">
@@ -505,6 +568,12 @@ export default function CreatorProfilePage({
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-sm font-semibold"
                             >
                                 S&apos;abonner et ouvrir le chat
+                            </button>
+                            <button
+                                onClick={handlePass}
+                                className="rounded-full border border-[#3a2c1a] px-5 py-2 text-sm font-semibold text-[#f0d8ac]"
+                            >
+                                Activer un pass 30 jours
                             </button>
                             <Link
                                 href="/offers"

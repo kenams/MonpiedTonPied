@@ -278,22 +278,20 @@ export default function ProfilePage() {
                                     <p className="text-xs text-[#b7ad9c]">Upload en cours...</p>
                                 )}
                             </div>
-                            {user.role === 'creator' && (
-                                <label className="block space-y-2">
-                                    <span className="text-sm text-[#b7ad9c]">Bio</span>
-                                    <textarea
-                                        value={formState.bio}
-                                        onChange={(event) =>
-                                            setFormState((prev) => ({
-                                                ...prev,
-                                                bio: event.target.value,
-                                            }))
-                                        }
-                                        className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
-                                        rows={4}
-                                    />
-                                </label>
-                            )}
+                            <label className="block space-y-2">
+                                <span className="text-sm text-[#b7ad9c]">Bio</span>
+                                <textarea
+                                    value={formState.bio}
+                                    onChange={(event) =>
+                                        setFormState((prev) => ({
+                                            ...prev,
+                                            bio: event.target.value,
+                                        }))
+                                    }
+                                    className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
+                                    rows={4}
+                                />
+                            </label>
                             <button
                                 onClick={handleSave}
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-6 py-2 text-sm font-semibold"

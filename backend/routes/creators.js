@@ -101,6 +101,32 @@ router.get('/:id', optionalAuth, async (req, res) => {
             : [];
         const purchasedIds = new Set(purchases.map((p) => p.content.toString()));
 
+        const mappedContents = contents.map((item) => {
+            const isPreview = previewIds.has(item._id.toString());
+            const isOwner = viewer && viewer._id.toString() === creator._id.toString();
+            const unlocked =
+                isOwner || canAccess || purchasedIds.has(item._id.toString()) || isPreview;
+            const canShowMedia = unlocked || isPreview;
+            return {
+                id: item._id,
+                title: item.title,
+                description: item.description,
+                previewUrl: canShowMedia
+                    ? getUploadsPath(item.files?.[0]?.url)
+                        ? signMediaUrl(item._id, 0)
+                        : item.files?.[0]?.url || null
+                    : null,
+                previewType: item.files?.[0]?.type || null,
+                price: item.files?.[0]?.price ?? null,
+                unlocked,
+                isPreview,
+            };
+        });
+
+        const visibleContents = canAccess
+            ? mappedContents
+            : mappedContents.slice(0, PREVIEW_LIMIT);
+
         return res.json({
             id: creator._id,
             username: creator.username,
@@ -110,23 +136,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
             verified: Boolean(creator.verifiedCreator),
             isSuspended: Boolean(creator.isSuspended),
             online: isOnline(creator._id, ONLINE_WINDOW_MS),
-            contents: contents.map((item) => {
-                const isPreview = previewIds.has(item._id.toString());
-                const isOwner = viewer && viewer._id.toString() === creator._id.toString();
-                const unlocked = isOwner || canAccess || purchasedIds.has(item._id.toString()) || isPreview;
-                return {
-                    id: item._id,
-                    title: item.title,
-                    description: item.description,
-                    previewUrl: getUploadsPath(item.files?.[0]?.url)
-                        ? signMediaUrl(item._id, 0)
-                        : item.files?.[0]?.url || null,
-                    previewType: item.files?.[0]?.type || null,
-                    price: item.files?.[0]?.price ?? null,
-                    unlocked,
-                    isPreview,
-                };
-            }),
+            contents: visibleContents,
         });
     } catch (error) {
         console.error('Creator detail error:', error);

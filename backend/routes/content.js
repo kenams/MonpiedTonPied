@@ -89,6 +89,7 @@ router.get('/', optionalAuth, async (req, res) => {
                     currentUser && creatorId === currentUser._id.toString();
                 const unlocked =
                     isOwner || canAccessAll || purchasedIds.has(item._id.toString()) || isPreview;
+                const canShowMedia = unlocked || isPreview;
 
                 return {
                     _id: item._id,
@@ -98,11 +99,13 @@ router.get('/', optionalAuth, async (req, res) => {
                         id: creatorId,
                         username: item.creator?.username || 'Anonyme',
                         displayName: item.creator?.displayName || item.creator?.username || 'Anonyme',
-                        avatarUrl: item.creator?.avatarUrl || '/default-avatar.png',
+                        avatarUrl: item.creator?.avatarUrl || '/default-avatar.svg',
                     },
-                    previewUrl: getUploadsPath(item.files?.[0]?.url)
-                        ? signMediaUrl(item._id, 0)
-                        : item.files?.[0]?.url || null,
+                    previewUrl: canShowMedia
+                        ? getUploadsPath(item.files?.[0]?.url)
+                            ? signMediaUrl(item._id, 0)
+                            : item.files?.[0]?.url || null
+                        : null,
                     price: item.files?.[0]?.price ?? null,
                     unlocked,
                     isPreview,
@@ -151,13 +154,20 @@ router.get('/:id', optionalAuth, async (req, res) => {
                 id: creatorId,
                 username: item.creator?.username || 'Anonyme',
                 displayName: item.creator?.displayName || item.creator?.username || 'Anonyme',
-                avatarUrl: item.creator?.avatarUrl || '/default-avatar.png',
+                avatarUrl: item.creator?.avatarUrl || '/default-avatar.svg',
             },
-            files: item.files.map((file, index) => ({
-                ...(file.toObject ? file.toObject() : file),
-                url: getUploadsPath(file.url) ? signMediaUrl(item._id, index) : file.url,
-                isLocked: !canAccess && !(isPreview && index === 0),
-            })),
+            files: item.files.map((file, index) => {
+                const isPreviewFile = isPreview && index === 0;
+                const isLocked = !canAccess && !isPreviewFile;
+                const signedUrl = getUploadsPath(file.url)
+                    ? signMediaUrl(item._id, index)
+                    : file.url;
+                return {
+                    ...(file.toObject ? file.toObject() : file),
+                    url: isLocked ? null : signedUrl,
+                    isLocked,
+                };
+            }),
             canAccess,
             isPreview,
             stats: item.stats,

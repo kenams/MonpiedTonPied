@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
@@ -10,8 +10,10 @@ import { setAuthToken } from '../../lib/auth';
 
 export default function LoginPage() {
     const router = useRouter();
-    const [identifier, setIdentifier] = useState('');
-    const [password, setPassword] = useState('');
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams?.get('redirect') || '/';
+    const [identifier, setIdentifier] = useState('consumer@monpiedtonpied.local');
+    const [password, setPassword] = useState('demo1234');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -37,7 +39,7 @@ export default function LoginPage() {
             }
 
             setAuthToken(data.token);
-            router.push('/profile');
+            router.push(redirectTo);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Connexion impossible.');
         } finally {
@@ -66,7 +68,7 @@ export default function LoginPage() {
                             <div>
                                 <p className="text-sm text-[#b7ad9c]">Compte demo</p>
                                 <p className="font-semibold text-[#f4ede3]">
-                                    demo@monpiedtonpied.local
+                                    consumer@monpiedtonpied.local
                                 </p>
                             </div>
                             <span className="text-xs rounded-full bg-[#2a2218] px-3 py-1 text-[#f0d8ac] border border-[#3a2c1a]">

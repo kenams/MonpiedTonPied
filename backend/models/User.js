@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
         passwordHash: { type: String, required: true },
         displayName: { type: String, trim: true },
         bio: { type: String, default: '', trim: true },
-        avatarUrl: { type: String, default: '/default-avatar.png' },
+        avatarUrl: { type: String, default: '/default-avatar.svg' },
         birthDate: { type: Date, default: null },
         ageVerifiedAt: { type: Date, default: null },
         role: {

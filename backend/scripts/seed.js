@@ -10,9 +10,12 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/monpie
 async function run() {
     await mongoose.connect(MONGODB_URI);
 
+    const defaultAvatarUrl = '/default-avatar.svg';
     const email = 'demo@monpiedtonpied.local';
     const username = 'DemoCreator';
     const password = 'demo1234';
+    const consumerEmail = 'consumer@monpiedtonpied.local';
+    const consumerUsername = 'DemoUser';
     const modelEmail = 'labresilienne@monpiedtonpied.local';
     const modelUsername = 'LaBresilienne';
     const legacyModelEmail = 'tessou@monpiedtonpied.local';
@@ -28,13 +31,49 @@ async function run() {
             role: 'creator',
             displayName: 'Demo Creator',
             bio: 'Createur de demonstration',
-            avatarUrl: '/default-avatar.png',
+            avatarUrl: defaultAvatarUrl,
             birthDate: new Date('1995-01-01'),
             ageVerifiedAt: new Date(),
         });
         console.log('OK Demo user created:', email, `password: ${password}`);
     } else {
+        if (!user.avatarUrl || user.avatarUrl === '/default-avatar.png') {
+            user.avatarUrl = defaultAvatarUrl;
+            await user.save();
+        }
         console.log('INFO Demo user already present:', email);
+    }
+
+    let consumer = await User.findOne({
+        $or: [{ email: consumerEmail }, { username: consumerUsername }],
+    });
+    if (!consumer) {
+        const passwordHash = await bcrypt.hash(password, 10);
+        consumer = await User.create({
+            username: consumerUsername,
+            email: consumerEmail,
+            passwordHash,
+            role: 'consumer',
+            displayName: 'Client Test',
+            bio: 'Compte test utilisateur pre-rempli.',
+            avatarUrl: defaultAvatarUrl,
+            birthDate: new Date('1999-01-01'),
+            ageVerifiedAt: new Date(),
+        });
+        console.log('OK Demo consumer created:', consumerEmail, `password: ${password}`);
+    } else {
+        consumer.username = consumerUsername;
+        consumer.email = consumerEmail;
+        consumer.displayName = consumer.displayName || 'Client Test';
+        consumer.bio = consumer.bio || 'Compte test utilisateur pre-rempli.';
+        if (!consumer.avatarUrl || consumer.avatarUrl === '/default-avatar.png') {
+            consumer.avatarUrl = defaultAvatarUrl;
+        }
+        if (!consumer.ageVerifiedAt) {
+            consumer.ageVerifiedAt = new Date();
+        }
+        await consumer.save();
+        console.log('INFO Demo consumer already present:', consumerEmail);
     }
 
     let model = await User.findOne({
