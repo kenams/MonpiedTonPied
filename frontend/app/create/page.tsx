@@ -14,7 +14,7 @@ type UploadResult = {
 
 const guidelines = [
     'Format recommande: JPG, PNG ou MP4.',
-    '3 photos visibles par createur, le reste est floute.',
+    '1 photo ou 10s de video gratuits par createur, le reste est floute.',
     'Serie courte, propre, et lumiere soignee.',
     'Age requis: 18+ et verification obligatoire.',
 ];

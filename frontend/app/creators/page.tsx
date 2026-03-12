@@ -15,6 +15,7 @@ type CreatorItem = {
     avatarUrl: string;
     verified: boolean;
     isSuspended?: boolean;
+    online?: boolean;
 };
 
 export default function CreatorsPage() {
@@ -155,9 +156,27 @@ export default function CreatorsPage() {
                                         )}
                                     </div>
                                     <div>
-                                        <p className="text-lg font-semibold text-[#f4ede3]">
-                                            {creator.displayName}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-lg font-semibold text-[#f4ede3]">
+                                                {creator.displayName}
+                                            </p>
+                                            <span
+                                                className={`inline-flex items-center gap-2 text-xs font-semibold ${
+                                                    creator.online
+                                                        ? 'text-emerald-300'
+                                                        : 'text-[#b7ad9c]'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`h-2 w-2 rounded-full ${
+                                                        creator.online
+                                                            ? 'bg-emerald-400'
+                                                            : 'bg-white/20'
+                                                    }`}
+                                                />
+                                                {creator.online ? 'En ligne' : 'Hors ligne'}
+                                            </span>
+                                        </div>
                                         <p className="text-sm text-[#b7ad9c] line-clamp-2">
                                             {creator.bio || 'Creator premium'}
                                         </p>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#15131b" />
+      <stop offset="100%" stop-color="#8f6b39" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#g)" />
+  <text x="50%" y="46%" fill="#f4ede3" font-size="54" font-family="Georgia, serif" dominant-baseline="middle" text-anchor="middle">Mira Sol</text>
+  <text x="50%" y="54%" fill="#d8c7a8" font-size="22" font-family="Arial, sans-serif" dominant-baseline="middle" text-anchor="middle">Photo preview</text>
+</svg>

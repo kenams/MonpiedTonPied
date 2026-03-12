@@ -91,6 +91,8 @@ const requestRoutes = require('./routes/requests');
 const stripeRoutes = require('./routes/stripe');
 const reportRoutes = require('./routes/reports');
 const dashboardRoutes = require('./routes/dashboard');
+const presenceRoutes = require('./routes/presence');
+const mediaRoutes = require('./routes/media');
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/content', contentRoutes);
@@ -103,6 +105,15 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/presence', presenceRoutes);
+app.use('/api/media', mediaRoutes);
+const allowPublicUploads = process.env.ALLOW_PUBLIC_UPLOADS === 'true';
+app.use('/uploads', (req, res, next) => {
+    if (!allowPublicUploads && /\.(mp4|webm|ogg|mov|m4v)$/i.test(req.path)) {
+        return res.status(403).json({ message: 'Acces refuse.' });
+    }
+    return next();
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Socket.io pour les messages en temps réel

@@ -76,7 +76,7 @@ export default function ConsumerRegisterPage() {
                         Decouvre les creators, en toute confiance.
                     </h1>
                     <p className="text-[#b7ad9c]">
-                        Acces aux profils, 3 photos visibles par creator, puis contenu
+                        Acces aux profils, 1 photo ou 10s de video gratuits par creator, puis contenu
                         floute. Le chat s&apos;ouvre apres abonnement.
                     </p>
                 </div>

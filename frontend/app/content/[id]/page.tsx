@@ -1,12 +1,14 @@
 ﻿'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { getAuthToken } from '../../lib/auth';
+import { resolveMediaUrl } from '../../lib/media';
+import WatermarkOverlay from '../../components/WatermarkOverlay';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +30,14 @@ type ContentDetail = {
     isPreview?: boolean;
 };
 
-export default function ContentPage({ params }: { params: { id: string } }) {
+const PREVIEW_SECONDS = 10;
+
+export default function ContentPage({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}) {
+    const { id } = use(params);
     const [content, setContent] = useState<ContentDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -42,7 +51,7 @@ export default function ContentPage({ params }: { params: { id: string } }) {
 
     const fetchContent = useCallback(async () => {
         try {
-            const response = await fetch(apiUrl(`/api/content/${params.id}`), {
+            const response = await fetch(apiUrl(`/api/content/${id}`), {
                 headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             });
             const data = await response.json();
@@ -55,7 +64,7 @@ export default function ContentPage({ params }: { params: { id: string } }) {
         } finally {
             setLoading(false);
         }
-    }, [params.id, token]);
+    }, [id, token]);
 
     useEffect(() => {
         fetchContent();
@@ -248,46 +257,74 @@ export default function ContentPage({ params }: { params: { id: string } }) {
                 <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-8">
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            {content.files.map((file, index) => (
-                                <div
-                                    key={`${file.url}-${index}`}
-                                    className="rounded-3xl bg-white/5 shadow-lg overflow-hidden border border-white/5"
-                                >
-                                    <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center relative">
-                                        {file.type.startsWith('video') ? (
-                                            <video
-                                                src={file.url}
-                                                controls={!file.isLocked}
-                                                className={`h-full w-full object-cover ${
-                                                    file.isLocked ? 'blur-md' : ''
-                                                }`}
-                                            />
-                                        ) : (
-                                            <img
-                                                src={file.url}
-                                                alt={content.title}
-                                                className={`h-full w-full object-cover ${
-                                                    file.isLocked ? 'blur-md' : ''
-                                                }`}
-                                            />
-                                        )}
-                                        {file.isLocked && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                                <span className="rounded-full bg-[#15131b] px-4 py-2 text-sm font-semibold text-[#f0d8ac] border border-white/10">
-                                                    Debloquer pour voir
-                                                </span>
-                                            </div>
-                                        )}
+                            {content.files.map((file, index) => {
+                                const mediaUrl = resolveMediaUrl(file.url);
+                                const limitPreview =
+                                    Boolean(content.isPreview) &&
+                                    !content.canAccess &&
+                                    index === 0;
+                                return (
+                                    <div
+                                        key={`${file.url}-${index}`}
+                                        className="rounded-3xl bg-white/5 shadow-lg overflow-hidden border border-white/5"
+                                    >
+                                        <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center relative">
+                                            {file.type.startsWith('video') ? (
+                                                <video
+                                                    src={mediaUrl}
+                                                    controls={!file.isLocked}
+                                                    controlsList="nodownload noplaybackrate noremoteplayback"
+                                                    disablePictureInPicture
+                                                    onContextMenu={(event) => event.preventDefault()}
+                                                    onTimeUpdate={(event) => {
+                                                        if (
+                                                            limitPreview &&
+                                                            event.currentTarget.currentTime >
+                                                                PREVIEW_SECONDS
+                                                        ) {
+                                                            event.currentTarget.pause();
+                                                            event.currentTarget.currentTime = 0;
+                                                        }
+                                                    }}
+                                                    className={`h-full w-full object-cover ${
+                                                        file.isLocked ? 'blur-md' : ''
+                                                    }`}
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={mediaUrl}
+                                                    alt={content.title}
+                                                    className={`h-full w-full object-cover ${
+                                                        file.isLocked ? 'blur-md' : ''
+                                                    }`}
+                                                />
+                                            )}
+                                            {limitPreview && (
+                                                <div className="absolute left-4 top-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
+                                                    Apercu {PREVIEW_SECONDS}s
+                                                </div>
+                                            )}
+                                            {file.type.startsWith('video') && <WatermarkOverlay />}
+                                            {file.isLocked && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                    <span className="rounded-full bg-[#15131b] px-4 py-2 text-sm font-semibold text-[#f0d8ac] border border-white/10">
+                                                        Debloquer pour voir
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="p-4 text-sm text-[#b7ad9c]">
+                                            {index === 0 && limitPreview
+                                                ? `Apercu ${PREVIEW_SECONDS}s`
+                                                : index === 0
+                                                ? 'Preview gratuite'
+                                                : file.isLocked
+                                                ? 'Verrouille'
+                                                : 'Accessible'}
+                                        </div>
                                     </div>
-                                    <div className="p-4 text-sm text-[#b7ad9c]">
-                                        {index === 0
-                                            ? 'Preview gratuite'
-                                            : file.isLocked
-                                            ? 'Verrouille'
-                                            : 'Accessible'}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                             {content.files.length === 0 && (
                                 <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-[#b7ad9c]">
                                     Aucun fichier associe.
@@ -343,7 +380,7 @@ export default function ContentPage({ params }: { params: { id: string } }) {
                             </h2>
                             <p className="text-sm text-[#b7ad9c]">
                                 Pass d&apos;acces 5.99 EUR ou abonnement 11.99 EUR / mois.
-                                3 photos visibles par creator, le reste est floute.
+                                1 photo ou 10s de video gratuits par creator.
                             </p>
                             <div className="space-y-3">
                                 <button

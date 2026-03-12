@@ -8,6 +8,8 @@ import Footer from '../components/Footer';
 import CTASection from '../components/CTASection';
 import { apiUrl } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
+import { resolveMediaUrl } from '../lib/media';
+import WatermarkOverlay from '../components/WatermarkOverlay';
 
 type ContentItem = {
     _id: string;
@@ -131,7 +133,7 @@ export default function BrowsePage() {
                                     Acces premium
                                 </p>
                                 <p className="text-lg text-[#f4ede3] font-semibold">
-                                    3 photos visibles par createur, le reste est floute.
+                                    1 photo ou 10s de video gratuits par createur.
                                 </p>
                                 <p className="text-sm text-[#b7ad9c]">
                                     Pass 5.99 EUR (30 jours) ou abonnement 11.99 EUR.
@@ -192,8 +194,9 @@ export default function BrowsePage() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {content.map((item) => {
-                            const imageUrl = item.previewUrl || '';
+                            const imageUrl = resolveMediaUrl(item.previewUrl);
                             const hasImage = imageUrl && !imageUrl.includes('placeholder-image');
+                            const isVideo = /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(imageUrl);
                             const isLocked = !item.unlocked;
 
                             return (
@@ -203,15 +206,27 @@ export default function BrowsePage() {
                                 >
                                     <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center relative">
                                         {hasImage ? (
-                                            <img
-                                                src={imageUrl}
-                                                alt={item.title}
-                                                className={`h-full w-full object-cover ${isLocked ? 'blur-md' : ''}`}
-                                                loading="lazy"
-                                            />
+                                            isVideo ? (
+                                                <video
+                                                    src={imageUrl}
+                                                    muted
+                                                    playsInline
+                                                    disablePictureInPicture
+                                                    onContextMenu={(event) => event.preventDefault()}
+                                                    className={`h-full w-full object-cover ${isLocked ? 'blur-md' : ''}`}
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={imageUrl}
+                                                    alt={item.title}
+                                                    className={`h-full w-full object-cover ${isLocked ? 'blur-md' : ''}`}
+                                                    loading="lazy"
+                                                />
+                                            )
                                         ) : (
                                             <div className="text-sm text-[#b7ad9c]">Preview</div>
                                         )}
+                                        {isVideo && <WatermarkOverlay />}
                                         {isLocked && (
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                                 <span className="rounded-full bg-[#15131b] px-4 py-2 text-xs font-semibold text-[#f0d8ac] border border-white/10">

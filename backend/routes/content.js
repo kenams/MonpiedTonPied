@@ -4,8 +4,11 @@ const User = require('../models/User');
 const Purchase = require('../models/Purchase');
 const auth = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
+const { signToken } = require('../utils/mediaTokens');
 
 const router = express.Router();
+const PREVIEW_LIMIT = Number(process.env.PREVIEW_LIMIT || 1);
+const MEDIA_TOKEN_TTL_MS = Number(process.env.MEDIA_TOKEN_TTL_MS || 10 * 60 * 1000);
 
 const isActive = (expiresAt) => {
     if (!expiresAt) return true;
@@ -32,6 +35,29 @@ const hasPurchase = async (user, contentId) => {
     return Boolean(purchase);
 };
 
+const getUploadsPath = (value) => {
+    if (!value) return null;
+    if (value.startsWith('/uploads/')) return value;
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+        try {
+            const parsed = new URL(value);
+            if (parsed.pathname.startsWith('/uploads/')) return parsed.pathname;
+        } catch {
+            return null;
+        }
+    }
+    return null;
+};
+
+const signMediaUrl = (contentId, index) => {
+    const token = signToken({
+        c: contentId.toString(),
+        i: index,
+        exp: Date.now() + MEDIA_TOKEN_TTL_MS,
+    });
+    return `/api/media/${contentId}/${index}?token=${token}`;
+};
+
 router.get('/', optionalAuth, async (req, res) => {
     try {
         const currentUser = req.user ? await User.findById(req.user.id) : null;
@@ -56,7 +82,7 @@ router.get('/', optionalAuth, async (req, res) => {
             items.map((item) => {
                 const creatorId = item.creator?._id?.toString() || 'unknown';
                 const count = previewCount.get(creatorId) || 0;
-                const isPreview = !canAccessAll && count < 3;
+                const isPreview = !canAccessAll && count < PREVIEW_LIMIT;
                 previewCount.set(creatorId, count + 1);
 
                 const isOwner =
@@ -74,7 +100,9 @@ router.get('/', optionalAuth, async (req, res) => {
                         displayName: item.creator?.displayName || item.creator?.username || 'Anonyme',
                         avatarUrl: item.creator?.avatarUrl || '/default-avatar.png',
                     },
-                    previewUrl: item.files?.[0]?.url || null,
+                    previewUrl: getUploadsPath(item.files?.[0]?.url)
+                        ? signMediaUrl(item._id, 0)
+                        : item.files?.[0]?.url || null,
                     price: item.files?.[0]?.price ?? null,
                     unlocked,
                     isPreview,
@@ -108,7 +136,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
         const previewItems = await Content.find({ creator: item.creator?._id })
             .sort({ createdAt: -1 })
-            .limit(3)
+            .limit(PREVIEW_LIMIT)
             .select('_id');
         const previewIds = new Set(previewItems.map((doc) => doc._id.toString()));
         const isPreview = previewIds.has(item._id.toString());
@@ -127,6 +155,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
             },
             files: item.files.map((file, index) => ({
                 ...(file.toObject ? file.toObject() : file),
+                url: getUploadsPath(file.url) ? signMediaUrl(item._id, index) : file.url,
                 isLocked: !canAccess && !(isPreview && index === 0),
             })),
             canAccess,

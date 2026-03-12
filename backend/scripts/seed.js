@@ -13,6 +13,10 @@ async function run() {
     const email = 'demo@monpiedtonpied.local';
     const username = 'DemoCreator';
     const password = 'demo1234';
+    const modelEmail = 'labresilienne@monpiedtonpied.local';
+    const modelUsername = 'LaBresilienne';
+    const legacyModelEmail = 'tessou@monpiedtonpied.local';
+    const legacyModelUsername = 'Tessou';
 
     let user = await User.findOne({ email });
     if (!user) {
@@ -23,14 +27,49 @@ async function run() {
             passwordHash,
             role: 'creator',
             displayName: 'Demo Creator',
-            bio: 'Créateur de démonstration',
+            bio: 'Createur de demonstration',
             avatarUrl: '/default-avatar.png',
             birthDate: new Date('1995-01-01'),
             ageVerifiedAt: new Date(),
         });
-        console.log('✅ Utilisateur demo créé:', email, `mot de passe: ${password}`);
+        console.log('OK Demo user created:', email, `password: ${password}`);
     } else {
-        console.log('ℹ️ Utilisateur demo déjà présent:', email);
+        console.log('INFO Demo user already present:', email);
+    }
+
+    let model = await User.findOne({
+        $or: [
+            { email: modelEmail },
+            { username: modelUsername },
+            { email: legacyModelEmail },
+            { username: legacyModelUsername },
+        ],
+    });
+    if (!model) {
+        const passwordHash = await bcrypt.hash(password, 10);
+        model = await User.create({
+            username: modelUsername,
+            email: modelEmail,
+            passwordHash,
+            role: 'creator',
+            displayName: 'LaBresilienne',
+            bio: 'Premier model mis en avant.',
+            avatarUrl: '/creators/labresilienne.jpg',
+            birthDate: new Date('1998-01-01'),
+            ageVerifiedAt: new Date(),
+            verifiedCreator: true,
+        });
+        console.log('OK Model user created:', modelEmail, `password: ${password}`);
+    } else {
+        model.username = modelUsername;
+        model.email = modelEmail;
+        model.avatarUrl = '/creators/labresilienne.jpg';
+        model.displayName = 'LaBresilienne';
+        if (!model.ageVerifiedAt) {
+            model.ageVerifiedAt = new Date();
+        }
+        await model.save();
+        console.log('INFO Model user already present:', modelEmail);
     }
 
     const contentCount = await Content.countDocuments();
@@ -38,7 +77,7 @@ async function run() {
         await Content.insertMany([
             {
                 title: 'Belles chaussures rouges',
-                description: 'Contenu exclusif de qualité premium',
+                description: 'Contenu exclusif de qualite premium',
                 creator: user._id,
                 files: [
                     {
@@ -65,15 +104,193 @@ async function run() {
                 stats: { views: 89, likes: 23 },
             },
         ]);
-        console.log('✅ Contenus de démo insérés.');
+        console.log('OK Demo contents inserted.');
     } else {
-        console.log('ℹ️ Contenus déjà présents, seed ignoré.');
+        console.log('INFO Contents already present, seed skipped.');
+    }
+
+    if (model) {
+        const modelContents = [
+            {
+                title: 'LaBresilienne - Video 01',
+                description: 'Apercu exclusif LaBresilienne.',
+                creator: model._id,
+                files: [
+                    {
+                        url: '/uploads/labresilienne/Snapchat-102772131.mp4',
+                        type: 'video/mp4',
+                    },
+                ],
+            },
+            {
+                title: 'LaBresilienne - Video 02',
+                description: 'Serie premium LaBresilienne.',
+                creator: model._id,
+                files: [
+                    {
+                        url: '/uploads/labresilienne/Snapchat-1057577605.mp4',
+                        type: 'video/mp4',
+                    },
+                ],
+            },
+            {
+                title: 'LaBresilienne - Video 03',
+                description: 'Collection prives LaBresilienne.',
+                creator: model._id,
+                files: [
+                    {
+                        url: '/uploads/labresilienne/Snapchat-163084523.mp4',
+                        type: 'video/mp4',
+                    },
+                ],
+            },
+            {
+                title: 'LaBresilienne - Video 04',
+                description: 'Set exclusif LaBresilienne.',
+                creator: model._id,
+                files: [
+                    {
+                        url: '/uploads/labresilienne/Snapchat-520040514.mp4',
+                        type: 'video/mp4',
+                    },
+                ],
+            },
+        ];
+
+        for (const item of modelContents) {
+            const existing = await Content.findOne({
+                creator: model._id,
+                title: item.title,
+            });
+            if (!existing) {
+                await Content.create(item);
+            }
+        }
+
+        const now = Date.now();
+        const order = [
+            { title: 'LaBresilienne - Video 01', offset: 3000 },
+            { title: 'LaBresilienne - Video 03', offset: 2000 },
+            { title: 'LaBresilienne - Video 04', offset: 1000 },
+            { title: 'LaBresilienne - Video 02', offset: 0 },
+        ];
+
+        for (const entry of order) {
+            const stamp = new Date(now - entry.offset);
+            await Content.updateOne(
+                { creator: model._id, title: entry.title },
+                { $set: { createdAt: stamp, updatedAt: stamp } }
+            );
+        }
+
+        console.log('OK LaBresilienne contents ensured and ordered.');
+    }
+
+    const fakeCreators = [
+        {
+            slug: 'novavelvet',
+            username: 'NovaVelvet',
+            displayName: 'Nova Velvet',
+            email: 'novavelvet@monpiedtonpied.local',
+            bio: 'Modele test premium.',
+            preview: 'photo',
+        },
+        {
+            slug: 'mirasol',
+            username: 'MiraSol',
+            displayName: 'Mira Sol',
+            email: 'mirasol@monpiedtonpied.local',
+            bio: 'Modele test soleil.',
+            preview: 'photo',
+        },
+        {
+            slug: 'noesatin',
+            username: 'NoeSatin',
+            displayName: 'Noe Satin',
+            email: 'noesatin@monpiedtonpied.local',
+            bio: 'Modele test satin.',
+            preview: 'photo',
+        },
+        {
+            slug: 'rheanoir',
+            username: 'RheaNoir',
+            displayName: 'Rhea Noir',
+            email: 'rheanoir@monpiedtonpied.local',
+            bio: 'Modele test noir.',
+            preview: 'photo',
+        },
+    ];
+
+    for (const fake of fakeCreators) {
+        let fakeUser = await User.findOne({
+            $or: [{ email: fake.email }, { username: fake.username }],
+        });
+        if (!fakeUser) {
+            const passwordHash = await bcrypt.hash(password, 10);
+            fakeUser = await User.create({
+                username: fake.username,
+                email: fake.email,
+                passwordHash,
+                role: 'creator',
+                displayName: fake.displayName,
+                bio: fake.bio,
+                avatarUrl: `/creators/${fake.slug}.svg`,
+                birthDate: new Date('1997-01-01'),
+                ageVerifiedAt: new Date(),
+                verifiedCreator: true,
+            });
+            console.log('OK Fake creator created:', fake.email);
+        } else {
+            fakeUser.displayName = fake.displayName;
+            fakeUser.bio = fake.bio;
+            fakeUser.avatarUrl = `/creators/${fake.slug}.svg`;
+            if (!fakeUser.ageVerifiedAt) {
+                fakeUser.ageVerifiedAt = new Date();
+            }
+            await fakeUser.save();
+            console.log('INFO Fake creator already present:', fake.email);
+        }
+
+        const photoTitle = `${fake.displayName} - Photo 01`;
+
+        await Content.deleteMany({
+            creator: fakeUser._id,
+            $or: [
+                { title: { $regex: /Video/i } },
+                { 'files.type': { $regex: /^video/i } },
+                { 'files.url': { $regex: /\/uploads\/fake\//i } },
+            ],
+        });
+
+        const existingPhoto = await Content.findOne({
+            creator: fakeUser._id,
+            title: photoTitle,
+        });
+        if (!existingPhoto) {
+            await Content.create({
+                title: photoTitle,
+                description: 'Photo test.',
+                creator: fakeUser._id,
+                files: [
+                    {
+                        url: `/placeholders/${fake.slug}-1.svg`,
+                        type: 'image/svg+xml',
+                    },
+                ],
+            });
+        }
+
+        const now = Date.now();
+        await Content.updateOne(
+            { creator: fakeUser._id, title: photoTitle },
+            { $set: { createdAt: new Date(now), updatedAt: new Date(now) } }
+        );
     }
 
     await mongoose.disconnect();
 }
 
 run().catch((err) => {
-    console.error('❌ Seed error:', err);
+    console.error('Seed error:', err);
     process.exit(1);
 });

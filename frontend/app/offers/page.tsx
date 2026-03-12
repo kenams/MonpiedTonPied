@@ -46,7 +46,7 @@ export default function OffersPage() {
                         Acces total aux collections et au chat.
                     </h1>
                     <p className="text-lg text-[#b7ad9c] max-w-2xl">
-                        3 photos visibles par creator. Le reste est floute jusqu&apos;au paiement.
+                        1 photo ou 10s de video gratuits par creator. Le reste est floute jusqu&apos;au paiement.
                         Les creators ont 48h pour repondre aux demandes custom.
                     </p>
                 </div>
@@ -68,7 +68,7 @@ export default function OffersPage() {
                         </p>
                         <ul className="text-sm text-[#b7ad9c] space-y-2">
                             <li>Acces aux galeries</li>
-                            <li>3 photos visibles avant achat</li>
+                            <li>1 photo ou 10s de video gratuits avant achat</li>
                             <li>Pas de chat</li>
                         </ul>
                         <button

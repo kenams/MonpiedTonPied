@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
@@ -13,7 +13,8 @@ type Message = {
     createdAt: string;
 };
 
-export default function ChatPage({ params }: { params: { id: string } }) {
+export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const token = getAuthToken();
     const [messages, setMessages] = useState<Message[]>([]);
     const [text, setText] = useState('');
@@ -21,7 +22,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
     const fetchMessages = async () => {
         if (!token) return;
-        const response = await fetch(apiUrl(`/api/chats/${params.id}/messages`), {
+        const response = await fetch(apiUrl(`/api/chats/${id}/messages`), {
             headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
@@ -35,12 +36,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     useEffect(() => {
         fetchMessages();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [params.id]);
+    }, [id]);
 
     const handleSend = async () => {
         if (!token || !text.trim()) return;
         setError(null);
-        const response = await fetch(apiUrl(`/api/chats/${params.id}/messages`), {
+        const response = await fetch(apiUrl(`/api/chats/${id}/messages`), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

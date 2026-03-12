@@ -1,13 +1,38 @@
 ﻿'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { clearAuthToken, getAuthToken } from '../lib/auth';
 import LogoMark from './LogoMark';
+import { apiUrl } from '../lib/api';
 
 export default function Navigation() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [token, setToken] = useState(() => getAuthToken());
+
+    useEffect(() => {
+        if (!token) return;
+        let cancelled = false;
+
+        const ping = async () => {
+            if (cancelled) return;
+            try {
+                await fetch(apiUrl('/api/presence/ping'), {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+            } catch {
+                // ignore
+            }
+        };
+
+        ping();
+        const interval = setInterval(ping, 30000);
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [token]);
 
     const handleLogout = () => {
         clearAuthToken();
@@ -26,7 +51,7 @@ export default function Navigation() {
                                 MonPiedTonPied
                             </span>
                             <p className="text-xs text-[#b7ad9c]">
-                                Creators and collection · by Kah-Prod
+                                Creators and collection · by Kah-Digital
                             </p>
                         </div>
                     </Link>

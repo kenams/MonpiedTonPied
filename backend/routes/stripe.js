@@ -9,20 +9,44 @@ const CustomRequest = require('../models/CustomRequest');
 const router = express.Router();
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const FRONTEND_URLS = (process.env.FRONTEND_URLS || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 const PASS_PRICE_ID = process.env.STRIPE_PRICE_PASS_ID;
 const SUBSCRIPTION_PRICE_ID = process.env.STRIPE_PRICE_SUBSCRIPTION_ID;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const PLATFORM_FEE_RATE = 0.2;
 const REQUEST_EXPIRY_HOURS = 48;
 const ALLOWED_RETURN_PREFIXES = ['monpiedtonpied://', 'exp://', 'expo://'];
+const ALLOWED_RETURN_ORIGINS = [FRONTEND_URL, ...FRONTEND_URLS]
+    .map((entry) => {
+        try {
+            return new URL(entry).origin;
+        } catch {
+            return null;
+        }
+    })
+    .filter(Boolean);
+
+const isAllowedWebReturnUrl = (value) => {
+    if (!value || ALLOWED_RETURN_ORIGINS.length === 0) return false;
+    try {
+        const url = new URL(value);
+        return ALLOWED_RETURN_ORIGINS.includes(url.origin);
+    } catch {
+        return false;
+    }
+};
 
 const resolveReturnUrl = (value, fallback) => {
     if (typeof value === 'string') {
         const trimmed = value.trim();
-        if (
-            trimmed &&
-            ALLOWED_RETURN_PREFIXES.some((prefix) => trimmed.startsWith(prefix))
-        ) {
+        if (!trimmed) return fallback;
+        if (ALLOWED_RETURN_PREFIXES.some((prefix) => trimmed.startsWith(prefix))) {
+            return trimmed;
+        }
+        if (isAllowedWebReturnUrl(trimmed)) {
             return trimmed;
         }
     }

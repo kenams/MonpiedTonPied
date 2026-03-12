@@ -17,3 +17,6 @@ coverage/
 .DS_Store
 .vscode/
 .vs/
+backend/uploads/
+image/
+video/

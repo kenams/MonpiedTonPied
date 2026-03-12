@@ -1,19 +1,22 @@
 ﻿'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { getAuthToken } from '../../lib/auth';
+import { resolveMediaUrl } from '../../lib/media';
+import WatermarkOverlay from '../../components/WatermarkOverlay';
 
 type CreatorContent = {
     id: string;
     title: string;
     description: string;
     previewUrl: string | null;
+    previewType?: string | null;
     price?: number | null;
     unlocked: boolean;
     isPreview: boolean;
@@ -26,15 +29,32 @@ type CreatorDetail = {
     avatarUrl: string;
     verified: boolean;
     isSuspended?: boolean;
+    online?: boolean;
     contents: CreatorContent[];
 };
 
 type ViewerStatus = {
     subscriptionActive?: boolean;
+    accessPassActive?: boolean;
 };
 
-export default function CreatorProfilePage({ params }: { params: { id: string } }) {
+const PREVIEW_SECONDS = 10;
+
+const isVideoPreview = (item: CreatorContent) => {
+    if (item.previewType) {
+        return item.previewType.startsWith('video');
+    }
+    if (!item.previewUrl) return false;
+    return /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(item.previewUrl);
+};
+
+export default function CreatorProfilePage({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}) {
     const router = useRouter();
+    const { id } = use(params);
     const token = getAuthToken();
     const isLoggedIn = Boolean(token);
     const [creator, setCreator] = useState<CreatorDetail | null>(null);
@@ -45,9 +65,10 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
     const [reportOpen, setReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [reportDetails, setReportDetails] = useState('');
+    const [autoChatTriggered, setAutoChatTriggered] = useState(false);
 
     useEffect(() => {
-        fetch(apiUrl(`/api/creators/${params.id}`), {
+        fetch(apiUrl(`/api/creators/${id}`), {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
             .then((res) => res.json())
@@ -70,7 +91,20 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                 .then((data) => setViewer(data))
                 .catch(() => {});
         }
-    }, [params.id, token]);
+    }, [id, token]);
+
+    const startChat = useCallback(async () => {
+        const response = await fetch(apiUrl(`/api/chats/${id}`), {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            setMessage(data.message || 'Chat indisponible.');
+            return;
+        }
+        router.push(`/chat/${data.id}`);
+    }, [id, router, token]);
 
     const handleChat = async () => {
         setMessage(null);
@@ -82,16 +116,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
             setMessage('Abonnement requis pour le chat.');
             return;
         }
-        const response = await fetch(apiUrl(`/api/chats/${params.id}`), {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
-        if (!response.ok) {
-            setMessage(data.message || 'Chat indisponible.');
-            return;
-        }
-        router.push(`/chat/${data.id}`);
+        await startChat();
     };
 
     const handleRequest = async () => {
@@ -107,7 +132,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                 Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-                creatorId: params.id,
+                creatorId: id,
                 prompt: requestPrompt,
                 price: requestPrice,
             }),
@@ -131,9 +156,15 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
             setMessage('Connecte-toi pour t\'abonner.');
             return;
         }
+        const successUrl = `${window.location.origin}/creators/${id}?success=subscription`;
+        const cancelUrl = `${window.location.origin}/creators/${id}?canceled=subscription`;
         const response = await fetch(apiUrl('/api/stripe/checkout/subscription'), {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ successUrl, cancelUrl }),
         });
         const data = await response.json();
         if (!response.ok) {
@@ -147,6 +178,37 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
             setViewer((prev) => ({ ...(prev || {}), subscriptionActive: true }));
         }
     };
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        if (!token || autoChatTriggered) return;
+        const paramsSearch = new URLSearchParams(window.location.search);
+        const success = paramsSearch.get('success');
+        const canceled = paramsSearch.get('canceled');
+        if (success === 'subscription') {
+            setAutoChatTriggered(true);
+            setMessage('Abonnement confirme. Ouverture du chat...');
+            fetch(apiUrl('/api/users/me'), {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    setViewer(data);
+                    if (data?.subscriptionActive) {
+                        startChat();
+                    } else {
+                        setMessage(
+                            'Abonnement en cours de confirmation. Reessaie dans quelques secondes.'
+                        );
+                    }
+                })
+                .catch(() => {
+                    setMessage('Impossible de verifier l\'abonnement.');
+                });
+        } else if (canceled === 'subscription') {
+            setMessage('Paiement annule. Abonnement non active.');
+        }
+    }, [token, autoChatTriggered, startChat]);
 
     const handleReport = async () => {
         if (!token) {
@@ -165,7 +227,7 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
             },
             body: JSON.stringify({
                 targetType: 'user',
-                targetId: params.id,
+                targetId: id,
                 reason: reportReason,
                 details: reportDetails,
             }),
@@ -180,6 +242,9 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
         setReportReason('');
         setReportDetails('');
     };
+
+    const hasFullAccess = Boolean(viewer?.subscriptionActive || viewer?.accessPassActive);
+    const showAllGallery = process.env.NEXT_PUBLIC_SHOW_ALL_GALLERY === 'true';
 
     if (!creator) {
         return (
@@ -206,6 +271,10 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
             </div>
         );
     }
+
+    const visibleContents = hasFullAccess || showAllGallery
+        ? creator.contents
+        : creator.contents.slice(0, 1);
 
     return (
         <div className="min-h-screen">
@@ -234,11 +303,27 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                         <h1 className="text-4xl font-semibold text-[#f4ede3]">
                             {creator.displayName}
                         </h1>
-                        {creator.verified && (
-                            <span className="inline-flex items-center gap-2 rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1 text-xs text-[#f0d8ac]">
-                                Creator verifie
+                        <div className="flex items-center gap-3">
+                            <span
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
+                                    creator.online
+                                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                                        : 'border-white/10 bg-white/5 text-[#b7ad9c]'
+                                }`}
+                            >
+                                <span
+                                    className={`h-2 w-2 rounded-full ${
+                                        creator.online ? 'bg-emerald-400' : 'bg-white/20'
+                                    }`}
+                                />
+                                {creator.online ? 'En ligne' : 'Hors ligne'}
                             </span>
-                        )}
+                            {creator.verified && (
+                                <span className="inline-flex items-center gap-2 rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1 text-xs text-[#f0d8ac]">
+                                    Creator verifie
+                                </span>
+                            )}
+                        </div>
                         <p className="text-[#b7ad9c] max-w-2xl">{creator.bio}</p>
                     </div>
                     <div className="flex flex-col gap-3">
@@ -269,62 +354,110 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-semibold text-[#f4ede3]">
-                                Galerie
+                                Apercu
                             </h2>
                             <span className="text-sm text-[#b7ad9c]">
-                                3 photos visibles, le reste floute
+                                1 photo ou 10s de video gratuits, le reste apres paiement
                             </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            {creator.contents.length === 0 && (
+                            {visibleContents.length === 0 && (
                                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-[#b7ad9c]">
                                     Aucun contenu publie pour le moment.
                                 </div>
                             )}
-                            {creator.contents.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="rounded-2xl bg-white/5 shadow-lg overflow-hidden border border-white/5"
-                                >
-                                    <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] relative">
-                                        {item.previewUrl ? (
-                                            <img
-                                                src={item.previewUrl}
-                                                alt={item.title}
-                                                className={`h-full w-full object-cover ${
-                                                    !item.unlocked ? 'blur-md' : ''
-                                                }`}
-                                            />
-                                        ) : (
-                                            <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
-                                                Preview
-                                            </div>
-                                        )}
-                                        {!item.unlocked && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                                                <span className="rounded-full bg-[#15131b] px-4 py-2 text-xs font-semibold text-[#f0d8ac] border border-white/10">
-                                                    Contenu verrouille
+                            {visibleContents.map((item) => {
+                                const videoPreview = isVideoPreview(item);
+                                const mediaUrl = resolveMediaUrl(item.previewUrl);
+                                const limitPreview =
+                                    videoPreview && item.isPreview && !hasFullAccess;
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className="rounded-2xl bg-white/5 shadow-lg overflow-hidden border border-white/5"
+                                    >
+                                        <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] relative">
+                                            {mediaUrl ? (
+                                                videoPreview ? (
+                                                    <video
+                                                        src={mediaUrl}
+                                                        muted
+                                                        playsInline
+                                                        controls
+                                                        controlsList="nodownload noplaybackrate noremoteplayback"
+                                                        disablePictureInPicture
+                                                        onContextMenu={(event) => event.preventDefault()}
+                                                        onTimeUpdate={(event) => {
+                                                            if (
+                                                                limitPreview &&
+                                                                event.currentTarget.currentTime >
+                                                                    PREVIEW_SECONDS
+                                                            ) {
+                                                                event.currentTarget.pause();
+                                                                event.currentTarget.currentTime = 0;
+                                                            }
+                                                        }}
+                                                        className={`h-full w-full object-cover ${
+                                                            !item.unlocked ? 'blur-md' : ''
+                                                        }`}
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={mediaUrl}
+                                                        alt={item.title}
+                                                        className={`h-full w-full object-cover ${
+                                                            !item.unlocked ? 'blur-md' : ''
+                                                        }`}
+                                                    />
+                                                )
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
+                                                    Preview
+                                                </div>
+                                            )}
+                                            {item.isPreview && !hasFullAccess && (
+                                                <div className="absolute left-4 top-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
+                                                    {videoPreview
+                                                        ? `Apercu ${PREVIEW_SECONDS}s`
+                                                        : 'Photo gratuite'}
+                                                </div>
+                                            )}
+                                            {videoPreview && <WatermarkOverlay />}
+                                            {!item.unlocked && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                                    <span className="rounded-full bg-[#15131b] px-4 py-2 text-xs font-semibold text-[#f0d8ac] border border-white/10">
+                                                        Contenu verrouille
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="p-4 space-y-2">
+                                            <p className="font-semibold text-[#f4ede3]">
+                                                {item.title}
+                                            </p>
+                                            <p className="text-sm text-[#b7ad9c] line-clamp-2">
+                                                {item.description}
+                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-[#b7ad9c]">
+                                                    {hasFullAccess
+                                                        ? 'Acces complet actif'
+                                                        : videoPreview
+                                                        ? `Apercu ${PREVIEW_SECONDS}s`
+                                                        : 'Photo gratuite'}
                                                 </span>
+                                                <Link
+                                                    href={`/content/${item.id}`}
+                                                    className="inline-flex text-sm font-semibold text-[#f0d8ac]"
+                                                >
+                                                    Voir la fiche -&gt;
+                                                </Link>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
-                                    <div className="p-4 space-y-2">
-                                        <p className="font-semibold text-[#f4ede3]">
-                                            {item.title}
-                                        </p>
-                                        <p className="text-sm text-[#b7ad9c] line-clamp-2">
-                                            {item.description}
-                                        </p>
-                                        <Link
-                                            href={`/content/${item.id}`}
-                                            className="inline-flex text-sm font-semibold text-[#f0d8ac]"
-                                        >
-                                            Voir la fiche -&gt;
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -364,13 +497,14 @@ export default function CreatorProfilePage({ params }: { params: { id: string } 
                                 Abonnement
                             </h3>
                             <p className="text-sm text-[#b7ad9c]">
-                                Abonnement = acces complet + chat illimite.
+                                Abonnement = acces complet + chat illimite. Apres paiement,
+                                le chat s&apos;ouvre automatiquement.
                             </p>
                             <button
                                 onClick={handleSubscribe}
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-sm font-semibold"
                             >
-                                S&apos;abonner 11.99 EUR
+                                S&apos;abonner et ouvrir le chat
                             </button>
                             <Link
                                 href="/offers"
