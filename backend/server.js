@@ -10,10 +10,17 @@ const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const Chat = require('./models/Chat');
 const { hasSubscriptionAccess, normalizeRole } = require('./utils/accessControl');
+const { seedDatabase } = require('./scripts/seed');
 require('dotenv').config();
 
 const app = express();
-app.set('trust proxy', process.env.TRUST_PROXY === 'true');
+const trustProxyValue =
+    process.env.TRUST_PROXY === 'true'
+        ? 1
+        : process.env.TRUST_PROXY === 'false'
+          ? 0
+          : process.env.TRUST_PROXY || 0;
+app.set('trust proxy', trustProxyValue);
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
@@ -208,9 +215,20 @@ if (SOCKET_ENABLED) {
 }
 
 // Connexion MongoDB (version de test avec base locale)
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/monpiedtonpied')
-    .then(() => console.log('✅ MongoDB connecté'))
-    .catch(err => console.log('❌ Erreur MongoDB:', err));
+mongoose
+    .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/monpiedtonpied')
+    .then(async () => {
+        console.log('✅ MongoDB connecté');
+        if (process.env.AUTO_SEED_DEMO === 'true') {
+            try {
+                await seedDatabase();
+                console.log('✅ Demo seed executed');
+            } catch (error) {
+                console.error('❌ Demo seed error:', error);
+            }
+        }
+    })
+    .catch((err) => console.log('❌ Erreur MongoDB:', err));
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

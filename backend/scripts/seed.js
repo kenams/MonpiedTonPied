@@ -5,11 +5,10 @@ const Content = require('../models/Content');
 
 require('dotenv').config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/monpiedtonpied';
+const MONGODB_URI =
+    process.env.MONGODB_URI || 'mongodb://localhost:27017/monpiedtonpied';
 
-async function run() {
-    await mongoose.connect(MONGODB_URI);
-
+async function seedDatabase() {
     const defaultAvatarUrl = '/default-avatar.svg';
     const email = 'demo@monpiedtonpied.local';
     const username = 'DemoCreator';
@@ -167,45 +166,25 @@ async function run() {
                 title: 'LaBresilienne - Video 01',
                 description: 'Apercu exclusif LaBresilienne.',
                 creator: model._id,
-                files: [
-                    {
-                        url: '/uploads/labresilienne/Snapchat-102772131.mp4',
-                        type: 'video/mp4',
-                    },
-                ],
+                files: [{ url: '/uploads/labresilienne/Snapchat-102772131.mp4', type: 'video/mp4' }],
             },
             {
                 title: 'LaBresilienne - Video 02',
                 description: 'Serie premium LaBresilienne.',
                 creator: model._id,
-                files: [
-                    {
-                        url: '/uploads/labresilienne/Snapchat-1057577605.mp4',
-                        type: 'video/mp4',
-                    },
-                ],
+                files: [{ url: '/uploads/labresilienne/Snapchat-1057577605.mp4', type: 'video/mp4' }],
             },
             {
                 title: 'LaBresilienne - Video 03',
                 description: 'Collection prives LaBresilienne.',
                 creator: model._id,
-                files: [
-                    {
-                        url: '/uploads/labresilienne/Snapchat-163084523.mp4',
-                        type: 'video/mp4',
-                    },
-                ],
+                files: [{ url: '/uploads/labresilienne/Snapchat-163084523.mp4', type: 'video/mp4' }],
             },
             {
                 title: 'LaBresilienne - Video 04',
                 description: 'Set exclusif LaBresilienne.',
                 creator: model._id,
-                files: [
-                    {
-                        url: '/uploads/labresilienne/Snapchat-520040514.mp4',
-                        type: 'video/mp4',
-                    },
-                ],
+                files: [{ url: '/uploads/labresilienne/Snapchat-520040514.mp4', type: 'video/mp4' }],
             },
         ];
 
@@ -245,7 +224,6 @@ async function run() {
             displayName: 'Nova Velvet',
             email: 'novavelvet@monpiedtonpied.local',
             bio: 'Modele test premium.',
-            preview: 'photo',
         },
         {
             slug: 'mirasol',
@@ -253,7 +231,6 @@ async function run() {
             displayName: 'Mira Sol',
             email: 'mirasol@monpiedtonpied.local',
             bio: 'Modele test soleil.',
-            preview: 'photo',
         },
         {
             slug: 'noesatin',
@@ -261,7 +238,6 @@ async function run() {
             displayName: 'Noe Satin',
             email: 'noesatin@monpiedtonpied.local',
             bio: 'Modele test satin.',
-            preview: 'photo',
         },
         {
             slug: 'rheanoir',
@@ -269,7 +245,6 @@ async function run() {
             displayName: 'Rhea Noir',
             email: 'rheanoir@monpiedtonpied.local',
             bio: 'Modele test noir.',
-            preview: 'photo',
         },
     ];
 
@@ -327,12 +302,7 @@ async function run() {
                 title: photoTitle,
                 description: 'Photo test.',
                 creator: fakeUser._id,
-                files: [
-                    {
-                        url: `/placeholders/${fake.slug}-1.svg`,
-                        type: 'image/svg+xml',
-                    },
-                ],
+                files: [{ url: `/placeholders/${fake.slug}-1.svg`, type: 'image/svg+xml' }],
             });
         }
 
@@ -342,11 +312,25 @@ async function run() {
             { $set: { createdAt: new Date(now), updatedAt: new Date(now) } }
         );
     }
-
-    await mongoose.disconnect();
 }
 
-run().catch((err) => {
-    console.error('Seed error:', err);
-    process.exit(1);
-});
+async function run() {
+    await mongoose.connect(MONGODB_URI);
+    try {
+        await seedDatabase();
+    } finally {
+        await mongoose.disconnect();
+    }
+}
+
+if (require.main === module) {
+    run().catch((err) => {
+        console.error('Seed error:', err);
+        process.exit(1);
+    });
+}
+
+module.exports = {
+    run,
+    seedDatabase,
+};
