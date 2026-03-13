@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Source_Sans_3 } from 'next/font/google';
+import { LocaleProvider } from './components/LocaleProvider';
 import './globals.css';
 
 const displayFont = Cormorant_Garamond({
@@ -36,12 +37,12 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="fr">
+        <html lang="fr" data-scroll-behavior="smooth">
             <body
                 className={`${displayFont.variable} ${bodyFont.variable} font-sans`}
                 suppressHydrationWarning
             >
-                {children}
+                <LocaleProvider>{children}</LocaleProvider>
             </body>
         </html>
     );

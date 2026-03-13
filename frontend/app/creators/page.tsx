@@ -7,6 +7,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import CTASection from '../components/CTASection';
 import { apiUrl } from '../lib/api';
+import { useLocale } from '../components/LocaleProvider';
 
 type CreatorItem = {
     id: string;
@@ -19,6 +20,7 @@ type CreatorItem = {
 };
 
 export default function CreatorsPage() {
+    const { t } = useLocale();
     const [creators, setCreators] = useState<CreatorItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -34,11 +36,11 @@ export default function CreatorsPage() {
             const data = await res.json();
             setCreators(Array.isArray(data) ? data : []);
         } catch {
-            setError('Impossible de charger les creators pour le moment.');
+            setError(t('creatorsPage.loadError'));
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         fetchCreators();
@@ -51,58 +53,55 @@ export default function CreatorsPage() {
             <div className="max-w-6xl mx-auto px-6 py-12 space-y-10">
                 <div className="space-y-4">
                     <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
-                        Creators
+                        {t('creatorsPage.eyebrow')}
                     </p>
                     <h1 className="text-4xl md:text-5xl font-semibold text-[#f4ede3]">
-                        Les profils les plus demandes.
+                        {t('creatorsPage.title')}
                     </h1>
                     <p className="text-lg text-[#b7ad9c] max-w-2xl">
-                        Parcours des univers exclusifs et choisis les creators que tu
-                        veux soutenir.
+                        {t('creatorsPage.subtitle')}
                     </p>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
                     <div className="glass rounded-3xl p-8 space-y-4">
                         <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
-                            Selection premium
+                            {t('creatorsPage.premiumSelection')}
                         </p>
                         <h2 className="text-2xl font-semibold text-[#f4ede3]">
-                            Portfolios soignes, presence continue.
+                            {t('creatorsPage.premiumTitle')}
                         </h2>
                         <p className="text-sm text-[#b7ad9c]">
-                            Chaque creator est verifie, suivi et accompagne. Les fans
-                            accedent aux collections completes apres paiement.
+                            {t('creatorsPage.premiumBody')}
                         </p>
                         <div className="flex flex-wrap gap-2 text-xs text-[#f0d8ac]">
                             <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">
-                                Verified
+                                {t('common.verified')}
                             </span>
                             <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">
-                                Support direct
+                                {t('creatorsPage.supportDirect')}
                             </span>
                             <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">
-                                Moderation active
+                                {t('creatorsPage.activeModeration')}
                             </span>
                         </div>
                     </div>
 
                     <div className="rounded-3xl border border-white/10 bg-white/5 p-8 space-y-4">
                         <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
-                            Devenir creator
+                            {t('creatorsPage.becomeCreator')}
                         </p>
                         <p className="text-2xl font-semibold text-[#f4ede3]">
-                            Lance ta boutique et propose tes series.
+                            {t('creatorsPage.becomeCreatorTitle')}
                         </p>
                         <p className="text-sm text-[#b7ad9c]">
-                            Profil complet, bio courte, photo avatar, verification age.
-                            Publie tes contenus en quelques minutes.
+                            {t('creatorsPage.becomeCreatorBody')}
                         </p>
                         <Link
                             href="/auth/register/creator"
                             className="inline-flex rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-sm font-semibold"
                         >
-                            Creer un compte creator
+                            {t('creatorsPage.createCreatorAccount')}
                         </Link>
                     </div>
                 </div>
@@ -114,7 +113,7 @@ export default function CreatorsPage() {
                             onClick={fetchCreators}
                             className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac]"
                         >
-                            Reessayer
+                            {t('common.retry')}
                         </button>
                     </div>
                 )}
@@ -130,7 +129,7 @@ export default function CreatorsPage() {
                     </div>
                 ) : creators.length === 0 ? (
                     <div className="rounded-3xl border border-dashed border-white/15 bg-white/5 p-10 text-center text-[#b7ad9c]">
-                        Aucun creator disponible pour le moment.
+                        {t('creatorsPage.noCreators')}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -174,28 +173,30 @@ export default function CreatorsPage() {
                                                             : 'bg-white/20'
                                                     }`}
                                                 />
-                                                {creator.online ? 'En ligne' : 'Hors ligne'}
+                                                {creator.online
+                                                    ? t('common.online')
+                                                    : t('common.offline')}
                                             </span>
                                         </div>
                                         <p className="text-sm text-[#b7ad9c] line-clamp-2">
-                                            {creator.bio || 'Creator premium'}
+                                            {creator.bio || t('creatorsPage.premiumFallback')}
                                         </p>
                                     </div>
                                 </div>
                                 <div className="mt-4 flex flex-wrap gap-2">
                                     {creator.verified && (
                                         <span className="inline-flex items-center gap-2 rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1 text-xs text-[#f0d8ac]">
-                                            Creator verifie
+                                            {t('creatorsPage.creatorVerified')}
                                         </span>
                                     )}
                                     {creator.isSuspended && (
                                         <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[#b7ad9c]">
-                                            Profil suspendu
+                                            {t('common.suspendedProfile')}
                                         </span>
                                     )}
                                 </div>
                                 <div className="mt-6 flex items-center gap-2 text-[#f0d8ac] font-semibold text-sm">
-                                    Voir le profil
+                                    {t('creatorsPage.seeProfile')}
                                     <span className="transition group-hover:translate-x-1">-&gt;</span>
                                 </div>
                             </Link>
@@ -203,11 +204,11 @@ export default function CreatorsPage() {
                     </div>
                 )}
                 <CTASection
-                    title="Lance ton profil creator."
-                    subtitle="Bio, avatar, verification age et publication rapide. Tout est pret."
-                    primaryLabel="Devenir creator"
+                    title={t('creatorsPage.ctaTitle')}
+                    subtitle={t('creatorsPage.ctaSubtitle')}
+                    primaryLabel={t('creatorsPage.ctaPrimary')}
                     primaryHref="/auth/register/creator"
-                    secondaryLabel="Voir les offres"
+                    secondaryLabel={t('creatorsPage.ctaSecondary')}
                     secondaryHref="/offers"
                 />
             </div>

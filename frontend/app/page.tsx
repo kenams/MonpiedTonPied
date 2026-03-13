@@ -9,6 +9,7 @@ import { apiUrl } from './lib/api';
 import { resolveMediaUrl } from './lib/media';
 import WatermarkOverlay from './components/WatermarkOverlay';
 import { getAuthToken } from './lib/auth';
+import { useLocale } from './components/LocaleProvider';
 
 type CreatorItem = {
     id: string;
@@ -61,6 +62,7 @@ const getInitials = (name: string) =>
         .toUpperCase();
 
 export default function Home() {
+    const { t } = useLocale();
     const token = getAuthToken();
     const [creators, setCreators] = useState<CreatorItem[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -83,11 +85,11 @@ export default function Home() {
             setCreators(list);
             setSelectedId((prev) => prev || list[0]?.id || null);
         } catch {
-            setError('Impossible de charger les models pour le moment.');
+            setError(t('home.loadError'));
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         fetchCreators();
@@ -129,59 +131,58 @@ export default function Home() {
                 <section className="grid grid-cols-1 lg:grid-cols-[1.05fr,0.95fr] gap-10 items-start">
                     <div className="space-y-6">
                         <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
-                            Vitrine premium
+                            {t('home.eyebrow')}
                         </p>
                         <h1 className="text-4xl md:text-5xl font-semibold text-[#f4ede3]">
-                            Acces direct aux models, apercu immediat, chat apres paiement.
+                            {t('home.title')}
                         </h1>
                         <p className="text-lg text-[#b7ad9c]">
-                            Choisis un model, vois une photo gratuite ou 10s de video, puis
-                            debloque l&apos;experience complete.
+                            {t('home.subtitle')}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4">
                             <Link
                                 href="/offers"
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-8 py-3 font-semibold text-sm shadow-lg"
                             >
-                                Debloquer l&apos;acces
+                                {t('home.unlock')}
                             </Link>
                             <Link
                                 href="/auth/register/creator"
                                 className="rounded-full border border-white/15 px-8 py-3 font-semibold text-sm text-[#d6cbb8]"
                             >
-                                Devenir creator
+                                {t('home.becomeCreator')}
                             </Link>
                         </div>
                         <div className="flex flex-wrap items-center gap-6 text-xs uppercase tracking-[0.35em] text-[#d8c7a8]">
-                            <span>Edition luxe</span>
-                            <span>Preview rapide</span>
-                            <span>Chat premium</span>
-                            <span>18+ uniquement</span>
+                            <span>{t('home.luxe')}</span>
+                            <span>{t('home.quickPreview')}</span>
+                            <span>{t('home.premiumChat')}</span>
+                            <span>{t('home.adultOnly')}</span>
                         </div>
                     </div>
 
                     <div className="glass rounded-3xl p-6 space-y-4">
                         <p className="text-xs uppercase tracking-[0.3em] text-[#d8c7a8]">
-                            Parcours
+                            {t('home.journey')}
                         </p>
                         <div className="space-y-3 text-sm text-[#b7ad9c]">
                             <div className="flex items-center gap-3">
                                 <span className="h-7 w-7 rounded-full bg-[#15131b] border border-white/10 text-xs text-[#f0d8ac] flex items-center justify-center">
                                     1
                                 </span>
-                                Selectionne un model et consulte son apercu.
+                                {t('home.journey1')}
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="h-7 w-7 rounded-full bg-[#15131b] border border-white/10 text-xs text-[#f0d8ac] flex items-center justify-center">
                                     2
                                 </span>
-                                1 photo ou 10s de video gratuites.
+                                {t('home.journey2')}
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="h-7 w-7 rounded-full bg-[#15131b] border border-white/10 text-xs text-[#f0d8ac] flex items-center justify-center">
                                     3
                                 </span>
-                                Paiement, acces complet et chat.
+                                {t('home.journey3')}
                             </div>
                         </div>
                     </div>
@@ -191,13 +192,13 @@ export default function Home() {
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-semibold text-[#f4ede3]">
-                                Models disponibles
+                                {t('home.availableModels')}
                             </h2>
                             <Link
                                 href="/creators"
                                 className="text-sm text-[#f0d8ac] font-semibold"
                             >
-                                Voir tout
+                                {t('home.seeAll')}
                             </Link>
                         </div>
 
@@ -218,7 +219,7 @@ export default function Home() {
                             </div>
                         ) : creators.length === 0 ? (
                             <div className="rounded-3xl border border-dashed border-white/15 bg-white/5 p-8 text-center text-[#b7ad9c]">
-                                Aucun model disponible pour le moment.
+                                {t('home.noModels')}
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -256,9 +257,9 @@ export default function Home() {
                                                         <p className="text-lg font-semibold text-[#f4ede3]">
                                                             {creator.displayName}
                                                         </p>
-                                                        <p className="text-xs text-[#b7ad9c] line-clamp-2">
+                                <p className="text-xs text-[#b7ad9c] line-clamp-2">
                                                             {creator.bio ||
-                                                                'Creator premium'}
+                                                                t('home.premiumCreatorFallback')}
                                                         </p>
                                                     </div>
                                                     <span
@@ -275,18 +276,20 @@ export default function Home() {
                                                                     : 'bg-white/20'
                                                             }`}
                                                         />
-                                                        {creator.online ? 'En ligne' : 'Hors ligne'}
+                                                        {creator.online
+                                                            ? t('common.online')
+                                                            : t('common.offline')}
                                                     </span>
                                                 </div>
                                                     <div className="mt-3 flex flex-wrap gap-2">
                                                         {creator.verified && (
                                                             <span className="inline-flex items-center gap-2 rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1 text-xs text-[#f0d8ac]">
-                                                                Verifie
+                                                                {t('common.verified')}
                                                             </span>
                                                         )}
                                                         {creator.isSuspended && (
                                                             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[#b7ad9c]">
-                                                                Profil suspendu
+                                                                {t('common.suspendedProfile')}
                                                             </span>
                                                         )}
                                                     </div>
@@ -316,10 +319,10 @@ export default function Home() {
                             </div>
                             <div className="space-y-1">
                                 <p className="text-xs uppercase tracking-[0.3em] text-[#d8c7a8]">
-                                    Model selectionne
+                                    {t('home.selectedModel')}
                                 </p>
                                 <p className="text-xl font-semibold text-[#f4ede3]">
-                                    {selectedCreator?.displayName || 'Selectionne un model'}
+                                    {selectedCreator?.displayName || t('home.selectModel')}
                                 </p>
                             </div>
                         </div>
@@ -363,34 +366,34 @@ export default function Home() {
                                 )
                             ) : (
                                 <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
-                                    Apercu indisponible
+                                    {t('home.previewUnavailable')}
                                 </div>
                             )}
                             {previewItem && (
                                 <div className="absolute left-4 top-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
                                     {previewIsVideo
-                                        ? `Apercu ${PREVIEW_SECONDS}s`
-                                        : 'Photo gratuite'}
+                                        ? t('home.previewVideo')
+                                        : t('home.freePhoto')}
                                 </div>
                             )}
                             {previewIsVideo && <WatermarkOverlay />}
                             {canOpenPreview && (
                                 <div className="absolute inset-0 flex items-end justify-end p-4">
                                     <span className="rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
-                                        Agrandir
+                                        {t('home.enlarge')}
                                     </span>
                                 </div>
                             )}
                         </button>
 
                         <div className="flex items-center justify-between text-xs text-[#b7ad9c]">
-                            <span>Apercu gratuit, acces complet apres paiement.</span>
+                            <span>{t('home.freePreviewLine')}</span>
                             {selectedId && (
                                 <Link
                                     href={`/creators/${selectedId}`}
                                     className="text-[#f0d8ac] font-semibold"
                                 >
-                                    Voir la galerie -&gt;
+                                    {t('home.seeGallery')}
                                 </Link>
                             )}
                         </div>
@@ -400,13 +403,13 @@ export default function Home() {
                                 href={selectedId ? `/creators/${selectedId}` : '/creators'}
                                 className="rounded-full border border-white/15 px-5 py-2 text-sm font-semibold text-[#d6cbb8] text-center"
                             >
-                                Voir le profil
+                                {t('home.seeProfile')}
                             </Link>
                             <Link
                                 href={selectedId ? `/creators/${selectedId}` : '/offers'}
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-sm font-semibold text-center"
                             >
-                                Debloquer + chat
+                                {t('home.unlockChat')}
                             </Link>
                         </div>
                     </div>
@@ -425,13 +428,13 @@ export default function Home() {
                         <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
-                                    Apercu grand format
+                                    {t('home.largePreview')}
                                 </p>
                                 <button
                                     onClick={() => setPreviewOpen(false)}
                                     className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8]"
                                 >
-                                    Fermer
+                                    {t('common.close')}
                                 </button>
                             </div>
                             <div className="aspect-video rounded-2xl bg-black/40 overflow-hidden border border-white/10">
@@ -465,7 +468,7 @@ export default function Home() {
                                     )
                                 ) : (
                                     <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
-                                        Apercu indisponible
+                                        {t('home.previewUnavailable')}
                                     </div>
                                 )}
                                 {previewIsVideo && <WatermarkOverlay />}

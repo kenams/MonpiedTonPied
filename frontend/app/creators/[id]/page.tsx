@@ -10,6 +10,7 @@ import { apiUrl } from '../../lib/api';
 import { getAuthToken } from '../../lib/auth';
 import { resolveMediaUrl } from '../../lib/media';
 import WatermarkOverlay from '../../components/WatermarkOverlay';
+import { useLocale } from '../../components/LocaleProvider';
 
 type CreatorContent = {
     id: string;
@@ -53,6 +54,7 @@ export default function CreatorProfilePage({
 }: {
     params: Promise<{ id: string }>;
 }) {
+    const { t } = useLocale();
     const router = useRouter();
     const { id } = use(params);
     const token = getAuthToken();
@@ -100,20 +102,20 @@ export default function CreatorProfilePage({
         });
         const data = await response.json();
         if (!response.ok) {
-            setMessage(data.message || 'Chat indisponible.');
+            setMessage(data.message || t('creatorProfile.unavailableChat'));
             return;
         }
         router.push(`/chat/${data.id}`);
-    }, [id, router, token]);
+    }, [id, router, t, token]);
 
     const handleChat = async () => {
         setMessage(null);
         if (!token) {
-            setMessage('Connecte-toi pour acceder au chat.');
+            setMessage(t('creatorProfile.loginForChat'));
             return;
         }
         if (!viewer?.subscriptionActive) {
-            setMessage('Abonnement requis pour le chat.');
+            setMessage(t('creatorProfile.subscriptionRequired'));
             return;
         }
         await startChat();
@@ -122,7 +124,7 @@ export default function CreatorProfilePage({
     const handleRequest = async () => {
         setMessage(null);
         if (!token) {
-            setMessage('Connecte-toi pour faire une demande.');
+            setMessage(t('creatorProfile.loginForRequest'));
             return;
         }
         const response = await fetch(apiUrl('/api/stripe/checkout/request'), {
@@ -139,13 +141,13 @@ export default function CreatorProfilePage({
         });
         const data = await response.json();
         if (!response.ok) {
-            setMessage(data.message || 'Demande impossible.');
+            setMessage(data.message || t('creatorProfile.requestFailed'));
             return;
         }
         if (data.url) {
             window.location.href = data.url;
         } else {
-            setMessage(data.message || 'Demande enregistree.');
+            setMessage(data.message || t('creatorProfile.requestSaved'));
             setRequestPrompt('');
             setRequestPrice('');
         }
@@ -153,7 +155,7 @@ export default function CreatorProfilePage({
 
     const handleSubscribe = async () => {
         if (!token) {
-            setMessage('Connecte-toi pour t\'abonner.');
+            setMessage(t('creatorProfile.loginForSubscribe'));
             return;
         }
         const successUrl = `${window.location.origin}/creators/${id}?success=subscription`;
@@ -168,20 +170,20 @@ export default function CreatorProfilePage({
         });
         const data = await response.json();
         if (!response.ok) {
-            setMessage(data.message || 'Abonnement impossible.');
+            setMessage(data.message || t('creatorProfile.subscribeFailed'));
             return;
         }
         if (data.url) {
             window.location.href = data.url;
         } else {
-            setMessage(data.message || 'Abonnement active.');
+            setMessage(data.message || t('creatorProfile.subscribeActive'));
             setViewer((prev) => ({ ...(prev || {}), subscriptionActive: true }));
         }
     };
 
     const handlePass = async () => {
         if (!token) {
-            setMessage('Connecte-toi pour activer un pass.');
+            setMessage(t('creatorProfile.loginForPass'));
             return;
         }
         const successUrl = `${window.location.origin}/creators/${id}?success=pass`;
@@ -196,13 +198,13 @@ export default function CreatorProfilePage({
         });
         const data = await response.json();
         if (!response.ok) {
-            setMessage(data.message || 'Pass impossible.');
+            setMessage(data.message || t('creatorProfile.passFailed'));
             return;
         }
         if (data.url) {
             window.location.href = data.url;
         } else {
-            setMessage(data.message || 'Pass active.');
+            setMessage(data.message || t('creatorProfile.passActive'));
             setViewer((prev) => ({ ...(prev || {}), accessPassActive: true }));
         }
     };
@@ -218,7 +220,7 @@ export default function CreatorProfilePage({
 
             if (success === 'subscription') {
                 autoChatTriggeredRef.current = true;
-                setMessage('Abonnement confirme. Ouverture du chat...');
+                setMessage(t('creatorProfile.subscriptionConfirmed'));
                 try {
                     const response = await fetch(apiUrl('/api/users/me'), {
                         headers: { Authorization: `Bearer ${token}` },
@@ -228,18 +230,16 @@ export default function CreatorProfilePage({
                     if (data?.subscriptionActive) {
                         await startChat();
                     } else {
-                        setMessage(
-                            'Abonnement en cours de confirmation. Reessaie dans quelques secondes.'
-                        );
+                        setMessage(t('creatorProfile.checkoutPending'));
                     }
                 } catch {
-                    setMessage('Impossible de verifier l\'abonnement.');
+                    setMessage(t('creatorProfile.subscriptionCheckFailed'));
                 }
                 return;
             }
 
             if (success === 'pass') {
-                setMessage('Pass actif. Acces complet aux galeries.');
+                setMessage(t('creatorProfile.passConfirmed'));
                 try {
                     const response = await fetch(apiUrl('/api/users/me'), {
                         headers: { Authorization: `Bearer ${token}` },
@@ -253,25 +253,25 @@ export default function CreatorProfilePage({
             }
 
             if (canceled === 'subscription') {
-                setMessage('Paiement annule. Abonnement non active.');
+                setMessage(t('creatorProfile.subscriptionCanceled'));
                 return;
             }
 
             if (canceled === 'pass') {
-                setMessage('Paiement annule. Pass non active.');
+                setMessage(t('creatorProfile.passCanceled'));
             }
         };
 
         syncCheckoutState();
-    }, [token, startChat]);
+    }, [token, startChat, t]);
 
     const handleReport = async () => {
         if (!token) {
-            setMessage('Connecte-toi pour signaler.');
+            setMessage(t('creatorProfile.loginForReport'));
             return;
         }
         if (!reportReason.trim()) {
-            setMessage('Raison requise.');
+            setMessage(t('creatorProfile.reasonRequired'));
             return;
         }
         const response = await fetch(apiUrl('/api/reports'), {
@@ -289,10 +289,10 @@ export default function CreatorProfilePage({
         });
         const data = await response.json();
         if (!response.ok) {
-            setMessage(data.message || 'Signalement impossible.');
+            setMessage(data.message || t('creatorProfile.reportFailed'));
             return;
         }
-        setMessage('Signalement envoye.');
+        setMessage(t('creatorProfile.reportSent'));
         setReportOpen(false);
         setReportReason('');
         setReportDetails('');
@@ -319,7 +319,7 @@ export default function CreatorProfilePage({
                 <Navigation />
                 <div className="max-w-4xl mx-auto px-6 py-16">
                     <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 text-[#f0d8ac]">
-                        Ce profil est temporairement suspendu.
+                        {t('creatorProfile.suspended')}
                     </div>
                 </div>
                 <Footer />
@@ -353,7 +353,7 @@ export default function CreatorProfilePage({
                     </div>
                     <div className="flex-1 space-y-2">
                         <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">
-                            Profil creator
+                            {t('creatorProfile.creatorProfile')}
                         </p>
                         <h1 className="text-4xl font-semibold text-[#f4ede3]">
                             {creator.displayName}
@@ -371,11 +371,13 @@ export default function CreatorProfilePage({
                                         creator.online ? 'bg-emerald-400' : 'bg-white/20'
                                     }`}
                                 />
-                                {creator.online ? 'En ligne' : 'Hors ligne'}
+                                {creator.online
+                                    ? t('common.online')
+                                    : t('common.offline')}
                             </span>
                             {creator.verified && (
                                 <span className="inline-flex items-center gap-2 rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1 text-xs text-[#f0d8ac]">
-                                    Creator verifie
+                                    {t('creatorsPage.creatorVerified')}
                                 </span>
                             )}
                         </div>
@@ -386,14 +388,14 @@ export default function CreatorProfilePage({
                             onClick={handleChat}
                             className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-6 py-3 font-semibold text-sm text-center"
                         >
-                            Ouvrir le chat
+                            {t('creatorProfile.openChat')}
                         </button>
                         {!isLoggedIn && (
                             <Link
                                 href="/auth/login"
                                 className="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-[#d6cbb8] text-center"
                             >
-                                Se connecter
+                                {t('nav.login')}
                             </Link>
                         )}
                     </div>
@@ -409,17 +411,17 @@ export default function CreatorProfilePage({
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-semibold text-[#f4ede3]">
-                                Apercu
+                                {t('creatorProfile.preview')}
                             </h2>
                             <span className="text-sm text-[#b7ad9c]">
-                                1 photo ou 10s de video gratuits, le reste apres paiement
+                                {t('creatorProfile.previewHint')}
                             </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             {visibleContents.length === 0 && (
                                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-[#b7ad9c]">
-                                    Aucun contenu publie pour le moment.
+                                    {t('creatorProfile.noContent')}
                                 </div>
                             )}
                             {visibleContents.map((item) => {
@@ -468,21 +470,21 @@ export default function CreatorProfilePage({
                                                 )
                                             ) : (
                                                 <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
-                                                    Preview
+                                                    {t('creatorProfile.previewFallback')}
                                                 </div>
                                             )}
                                             {item.isPreview && !hasFullAccess && (
                                                 <div className="absolute left-4 top-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
                                                     {videoPreview
-                                                        ? `Apercu ${PREVIEW_SECONDS}s`
-                                                        : 'Photo gratuite'}
+                                                        ? t('creatorProfile.previewLabelVideo')
+                                                        : t('creatorProfile.previewLabelPhoto')}
                                                 </div>
                                             )}
                                             {videoPreview && <WatermarkOverlay />}
                                             {!item.unlocked && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                                     <span className="rounded-full bg-[#15131b] px-4 py-2 text-xs font-semibold text-[#f0d8ac] border border-white/10">
-                                                        Contenu verrouille
+                                                        {t('creatorProfile.locked')}
                                                     </span>
                                                 </div>
                                             )}
@@ -497,16 +499,16 @@ export default function CreatorProfilePage({
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs text-[#b7ad9c]">
                                                     {hasFullAccess
-                                                        ? 'Acces complet actif'
+                                                        ? t('creatorProfile.fullAccess')
                                                         : videoPreview
-                                                        ? `Apercu ${PREVIEW_SECONDS}s`
-                                                        : 'Photo gratuite'}
+                                                        ? t('creatorProfile.previewLine')
+                                                        : t('creatorProfile.previewLabelPhoto')}
                                                 </span>
                                                 <Link
                                                     href={`/content/${item.id}`}
                                                     className="inline-flex text-sm font-semibold text-[#f0d8ac]"
                                                 >
-                                                    Voir la fiche -&gt;
+                                                    {t('creatorProfile.contentSheet')}
                                                 </Link>
                                             </div>
                                         </div>
@@ -521,21 +523,21 @@ export default function CreatorProfilePage({
                                     href={`/auth/login?redirect=/creators/${id}`}
                                     className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
                                 >
-                                    Se connecter pour debloquer
+                                    {t('creatorProfile.loginToUnlock')}
                                 </Link>
                             ) : viewer?.subscriptionActive ? (
                                 <button
                                     onClick={handleChat}
                                     className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
                                 >
-                                    Ouvrir le chat
+                                    {t('creatorProfile.openChat')}
                                 </button>
                             ) : (
                                 <button
                                     onClick={handleSubscribe}
                                     className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
                                 >
-                                    S&apos;abonner pour debloquer
+                                    {t('creatorProfile.subscribeToUnlock')}
                                 </button>
                             )}
                         </div>
@@ -544,71 +546,70 @@ export default function CreatorProfilePage({
                     <div className="space-y-6">
                         <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-4">
                             <h3 className="text-lg font-semibold text-[#f4ede3]">
-                                Demande personnalisee
+                                {t('creatorProfile.customRequest')}
                             </h3>
                             <p className="text-sm text-[#b7ad9c]">
-                                Decris ta demande (pieds uniquement). Le creator a 48h pour repondre.
+                                {t('creatorProfile.customRequestBody')}
                             </p>
                             <textarea
                                 value={requestPrompt}
                                 onChange={(event) => setRequestPrompt(event.target.value)}
                                 className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
                                 rows={4}
-                                placeholder="Ex: video pied sur drap satin..."
+                                placeholder={t('creatorProfile.requestPlaceholder')}
                             />
                             <input
                                 value={requestPrice}
                                 onChange={(event) => setRequestPrice(event.target.value)}
                                 className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
-                                placeholder="Prix propose (ex: 29.99)"
+                                placeholder={t('creatorProfile.pricePlaceholder')}
                             />
                             <button
                                 onClick={handleRequest}
                                 className="w-full rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] py-2 text-sm font-semibold"
                             >
-                                Envoyer la demande
+                                {t('creatorProfile.sendRequest')}
                             </button>
                             <p className="text-xs text-[#b7ad9c]">
-                                Commission plateforme: 20%.
+                                {t('creatorProfile.commission')}
                             </p>
                         </div>
                         <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-3">
                             <h3 className="text-lg font-semibold text-[#f4ede3]">
-                                Abonnement
+                                {t('creatorProfile.subscription')}
                             </h3>
                             <p className="text-sm text-[#b7ad9c]">
-                                Abonnement = acces complet + chat illimite. Apres paiement,
-                                le chat s&apos;ouvre automatiquement.
+                                {t('creatorProfile.subscriptionBody')}
                             </p>
                             <button
                                 onClick={handleSubscribe}
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-sm font-semibold"
                             >
-                                S&apos;abonner et ouvrir le chat
+                                {t('creatorProfile.subscribeAndChat')}
                             </button>
                             <button
                                 onClick={handlePass}
                                 className="rounded-full border border-[#3a2c1a] px-5 py-2 text-sm font-semibold text-[#f0d8ac]"
                             >
-                                Activer un pass 30 jours
+                                {t('creatorProfile.activatePass')}
                             </button>
                             <Link
                                 href="/offers"
                                 className="inline-flex text-sm font-semibold text-[#f0d8ac]"
                             >
-                                Voir les offres -&gt;
+                                {t('creatorProfile.seeOffers')}
                             </Link>
                         </div>
                         <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-[#f4ede3]">
-                                    Moderation
+                                    {t('creatorProfile.moderation')}
                                 </h3>
                                 <button
                                     onClick={() => setReportOpen((prev) => !prev)}
                                     className="text-sm text-[#f0d8ac] font-semibold"
                                 >
-                                    Signaler
+                                    {t('creatorProfile.report')}
                                 </button>
                             </div>
                             {reportOpen && (
@@ -619,7 +620,7 @@ export default function CreatorProfilePage({
                                             setReportReason(event.target.value)
                                         }
                                         className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
-                                        placeholder="Raison (ex: comportement abusif)"
+                                        placeholder={t('creatorProfile.reportReason')}
                                     />
                                     <textarea
                                         value={reportDetails}
@@ -628,13 +629,13 @@ export default function CreatorProfilePage({
                                         }
                                         className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
                                         rows={3}
-                                        placeholder="Details"
+                                        placeholder={t('creatorProfile.reportDetails')}
                                     />
                                     <button
                                         onClick={handleReport}
                                         className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-4 py-2 text-sm font-semibold"
                                     >
-                                        Envoyer
+                                        {t('creatorProfile.send')}
                                     </button>
                                 </div>
                             )}

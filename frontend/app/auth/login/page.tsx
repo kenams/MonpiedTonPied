@@ -7,8 +7,10 @@ import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { setAuthToken } from '../../lib/auth';
+import { useLocale } from '../../components/LocaleProvider';
 
 function LoginContent() {
+    const { t } = useLocale();
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams?.get('redirect') || '/';
@@ -35,13 +37,13 @@ function LoginContent() {
 
             const data = await response.json();
             if (!response.ok) {
-                throw new Error(data.message || 'Connexion impossible.');
+                throw new Error(data.message || t('login.loginFailed'));
             }
 
             setAuthToken(data.token);
             router.push(redirectTo);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Connexion impossible.');
+            setError(err instanceof Error ? err.message : t('login.loginFailed'));
         } finally {
             setLoading(false);
         }
@@ -54,25 +56,26 @@ function LoginContent() {
             <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-2">
                 <div className="space-y-6">
                     <p className="text-xs uppercase tracking-[0.3em] text-[#d8c7a8]">
-                        MonPiedTonPied
+                        {t('login.eyebrow')}
                     </p>
                     <h1 className="text-4xl font-semibold text-[#f4ede3] md:text-5xl">
-                        Heureux de te revoir.
+                        {t('login.title')}
                     </h1>
                     <p className="text-lg text-[#b7ad9c]">
-                        Accede a tes collections, retrouve tes creators favoris et prepare
-                        tes prochaines publications.
+                        {t('login.subtitle')}
                     </p>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-[#b7ad9c]">Compte demo</p>
+                                <p className="text-sm text-[#b7ad9c]">
+                                    {t('login.demoAccount')}
+                                </p>
                                 <p className="font-semibold text-[#f4ede3]">
                                     consumer@monpiedtonpied.local
                                 </p>
                             </div>
                             <span className="rounded-full border border-[#3a2c1a] bg-[#2a2218] px-3 py-1 text-xs text-[#f0d8ac]">
-                                mot de passe: demo1234
+                                {t('login.passwordLabel')}: demo1234
                             </span>
                         </div>
                     </div>
@@ -80,21 +83,23 @@ function LoginContent() {
 
                 <form onSubmit={handleSubmit} className="glass rounded-3xl p-8 space-y-6">
                     <div>
-                        <h2 className="text-2xl font-semibold text-[#f4ede3]">Connexion</h2>
+                        <h2 className="text-2xl font-semibold text-[#f4ede3]">
+                            {t('login.formTitle')}
+                        </h2>
                         <p className="text-sm text-[#b7ad9c]">
-                            Pas encore inscrit ?{' '}
+                            {t('login.notRegistered')}{' '}
                             <Link
                                 href="/auth/register"
                                 className="font-semibold text-[#f0d8ac]"
                             >
-                                Creer un compte
+                                {t('login.createAccount')}
                             </Link>
                         </p>
                         <Link
                             href="/auth/reset"
                             className="text-xs uppercase tracking-[0.2em] text-[#d8c7a8]"
                         >
-                            Mot de passe oublie
+                            {t('login.forgotPassword')}
                         </Link>
                     </div>
 
@@ -105,18 +110,20 @@ function LoginContent() {
                     )}
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Email ou pseudo</span>
+                        <span className="text-sm text-[#b7ad9c]">
+                            {t('login.emailOrUsername')}
+                        </span>
                         <input
                             value={identifier}
                             onChange={(event) => setIdentifier(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a] focus:outline-none focus:ring-2 focus:ring-[#c7a46a]"
-                            placeholder="ex: marie@pied.com"
+                            placeholder={t('login.emailPlaceholder')}
                             required
                         />
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Mot de passe</span>
+                        <span className="text-sm text-[#b7ad9c]">{t('login.password')}</span>
                         <input
                             type="password"
                             value={password}
@@ -132,7 +139,7 @@ function LoginContent() {
                         disabled={loading}
                         className="w-full rounded-xl bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 font-semibold text-[#0b0a0f] shadow-lg transition disabled:opacity-60"
                     >
-                        {loading ? 'Connexion...' : 'Se connecter'}
+                        {loading ? t('login.submitLoading') : t('login.submit')}
                     </button>
                 </form>
             </div>

@@ -5,8 +5,11 @@ import { useEffect, useState } from 'react';
 import { clearAuthToken, getAuthToken } from '../lib/auth';
 import LogoMark from './LogoMark';
 import { apiUrl } from '../lib/api';
+import LocaleToggle from './LocaleToggle';
+import { useLocale } from './LocaleProvider';
 
 export default function Navigation() {
+    const { t } = useLocale();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [token, setToken] = useState(() => getAuthToken());
     const [unreadCount, setUnreadCount] = useState(0);
@@ -78,54 +81,55 @@ export default function Navigation() {
                                 MonPiedTonPied
                             </span>
                             <p className="text-xs text-[#b7ad9c]">
-                                Creators and collection · by Kah-Digital
+                                {t('nav.tagline')}
                             </p>
                         </div>
                     </Link>
 
                     <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#d6cbb8]">
+                        <LocaleToggle />
                         <Link
                             href="/browse"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Galerie
+                            {t('nav.gallery')}
                         </Link>
                         <Link
                             href="/creators"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Creators
+                            {t('nav.creators')}
                         </Link>
                         <Link
                             href="/offers"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Offres
+                            {t('nav.offers')}
                         </Link>
                         <Link
                             href="/premium"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Premium
+                            {t('nav.premium')}
                         </Link>
                         <Link
                             href="/create"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Publier
+                            {t('nav.publish')}
                         </Link>
                         <Link
                             href="/profile"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
-                            Profil
+                            {t('nav.profile')}
                         </Link>
                         <Link
                             href="/notifications"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
                             <span className="inline-flex items-center gap-2">
-                                Notifications
+                                {t('nav.notifications')}
                                 {unreadCount > 0 && (
                                     <span className="rounded-full bg-[#c7a46a] text-[#0b0a0f] text-[10px] px-2 py-0.5">
                                         {unreadCount}
@@ -138,7 +142,7 @@ export default function Navigation() {
                                 onClick={handleLogout}
                                 className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8] hover:border-[#c7a46a]"
                             >
-                                Se deconnecter
+                                {t('nav.logout')}
                             </button>
                         ) : (
                             <>
@@ -146,13 +150,13 @@ export default function Navigation() {
                                     href="/auth/login"
                                     className="hover:text-[#f0d8ac] transition-colors"
                                 >
-                                    Connexion
+                                    {t('nav.login')}
                                 </Link>
                                 <Link
                                     href="/auth/register"
                                     className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-xs shadow-lg"
                                 >
-                                    S&apos;inscrire
+                                    {t('nav.signup')}
                                 </Link>
                             </>
                         )}
@@ -161,7 +165,7 @@ export default function Navigation() {
                     <button
                         className="md:hidden flex flex-col space-y-1"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        aria-label="Ouvrir le menu"
+                        aria-label={t('nav.openMenu')}
                     >
                         <span className="w-6 h-0.5 bg-[#d6cbb8]"></span>
                         <span className="w-6 h-0.5 bg-[#d6cbb8]"></span>
@@ -171,47 +175,48 @@ export default function Navigation() {
 
                 {isMenuOpen && (
                     <div className="md:hidden py-4 border-t border-white/10 space-y-3 text-sm font-semibold text-[#d6cbb8]">
+                        <LocaleToggle />
                         <Link
                             href="/browse"
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Galerie
+                            {t('nav.gallery')}
                         </Link>
                         <Link
                             href="/creators"
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Creators
+                            {t('nav.creators')}
                         </Link>
                         <Link
                             href="/offers"
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Offres
+                            {t('nav.offers')}
                         </Link>
                         <Link
                             href="/premium"
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Premium
+                            {t('nav.premium')}
                         </Link>
                         <Link
                             href="/create"
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Publier
+                            {t('nav.publish')}
                         </Link>
                         <Link
                             href="/profile"
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
                         >
-                            Profil
+                            {t('nav.profile')}
                         </Link>
                         <Link
                             href="/notifications"
@@ -219,7 +224,7 @@ export default function Navigation() {
                             onClick={() => setIsMenuOpen(false)}
                         >
                             <span className="inline-flex items-center gap-2">
-                                Notifications
+                                {t('nav.notifications')}
                                 {unreadCount > 0 && (
                                     <span className="rounded-full bg-[#c7a46a] text-[#0b0a0f] text-[10px] px-2 py-0.5">
                                         {unreadCount}
@@ -232,7 +237,7 @@ export default function Navigation() {
                                 onClick={handleLogout}
                                 className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8]"
                             >
-                                Se deconnecter
+                                {t('nav.logout')}
                             </button>
                         ) : (
                             <>
@@ -241,14 +246,14 @@ export default function Navigation() {
                                     className="block"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
-                                    Connexion
+                                    {t('nav.login')}
                                 </Link>
                                 <Link
                                     href="/auth/register"
                                     className="inline-flex rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-xs shadow-lg"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
-                                    S&apos;inscrire
+                                    {t('nav.signup')}
                                 </Link>
                             </>
                         )}
