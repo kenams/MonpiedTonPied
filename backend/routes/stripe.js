@@ -1,5 +1,4 @@
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
 const Content = require('../models/Content');
@@ -10,6 +9,7 @@ const Payment = require('../models/Payment');
 const WebhookEvent = require('../models/WebhookEvent');
 const { createAndEmitNotification } = require('../utils/notify');
 const { normalizeRole } = require('../utils/accessControl');
+const { getStripeClient, isStripeConfigured } = require('../utils/stripeClient');
 
 const router = express.Router();
 
@@ -122,12 +122,15 @@ const markWebhookProcessed = async (event) => {
 const isMockMode = () => {
     return (
         process.env.PAYWALL_MODE === 'staging' ||
-        !process.env.STRIPE_SECRET_KEY ||
-        process.env.STRIPE_SECRET_KEY === 'sk_test_change_me'
+        !isStripeConfigured()
     );
 };
 
 const ensureCustomer = async (user) => {
+    const stripe = getStripeClient();
+    if (!stripe) {
+        throw new Error('Stripe non configure.');
+    }
     if (user.stripeCustomerId) {
         return user.stripeCustomerId;
     }
@@ -562,9 +565,10 @@ router.post('/portal', auth, async (req, res) => {
                 message: 'Portail indisponible en mode mock.',
             });
         }
-        if (!process.env.STRIPE_SECRET_KEY) {
+        if (!isStripeConfigured()) {
             return res.status(500).json({ message: 'Stripe non configure.' });
         }
+        const stripe = getStripeClient();
 
         const user = await User.findById(req.user.id);
         if (!assertActiveUser(user, res)) return;
@@ -593,6 +597,10 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         if (!WEBHOOK_SECRET) {
             return res.status(500).json({ message: 'Webhook secret manquant.' });
         }
+        const stripe = getStripeClient();
+        if (!stripe) {
+            return res.status(500).json({ message: 'Stripe non configure.' });
+        }
         event = stripe.webhooks.constructEvent(
             req.body,
             req.headers['stripe-signature'],
@@ -604,6 +612,10 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     }
 
     try {
+        const stripe = getStripeClient();
+        if (!stripe) {
+            return res.status(500).json({ message: 'Stripe non configure.' });
+        }
         if (await isWebhookProcessed(event.id)) {
             return res.json({ received: true, duplicate: true });
         }

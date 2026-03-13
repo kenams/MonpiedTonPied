@@ -3,8 +3,7 @@ const auth = require('../middleware/auth');
 const User = require('../models/User');
 const CustomRequest = require('../models/CustomRequest');
 const { normalizeRole } = require('../utils/accessControl');
-
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
+const { getStripeClient, isStripeConfigured } = require('../utils/stripeClient');
 
 const router = express.Router();
 
@@ -12,10 +11,7 @@ const PLATFORM_FEE_RATE = 0.2;
 const REQUEST_EXPIRY_HOURS = 48;
 
 const isStripeReady = () => {
-    return (
-        process.env.STRIPE_SECRET_KEY &&
-        process.env.STRIPE_SECRET_KEY !== 'sk_test_change_me'
-    );
+    return isStripeConfigured();
 };
 
 const processRefund = async (request) => {
@@ -29,6 +25,12 @@ const processRefund = async (request) => {
     }
 
     try {
+        const stripe = getStripeClient();
+        if (!stripe) {
+            request.refundStatus = 'pending';
+            await request.save();
+            return;
+        }
         await stripe.refunds.create({
             payment_intent: request.paymentIntentId,
         });
