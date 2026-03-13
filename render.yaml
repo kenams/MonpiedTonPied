@@ -1,0 +1,85 @@
+services:
+  - type: web
+    name: monpiedtonpied-api
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: RESET_TOKEN_TTL_MINUTES
+        value: 60
+      - key: EXPOSE_RESET_TOKEN
+        value: false
+      - key: REQUIRE_EMAIL_VERIFICATION
+        value: true
+      - key: VERIFY_TOKEN_TTL_MINUTES
+        value: 1440
+      - key: EXPOSE_VERIFY_TOKEN
+        value: false
+      - key: DEFAULT_LOCALE
+        value: fr
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_SECURE
+        value: false
+      - key: EMAIL_FROM
+        value: no-reply@monpiedtonpied.com
+      - key: FRONTEND_URL
+        sync: false
+      - key: FRONTEND_URLS
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: PUSH_SUBJECT
+        value: mailto:admin@monpiedtonpied.com
+      - key: TRUST_PROXY
+        value: true
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX
+        value: 200
+      - key: RATE_LIMIT_AUTH_MAX
+        value: 15
+      - key: RATE_LIMIT_CHAT_WINDOW_MS
+        value: 60000
+      - key: RATE_LIMIT_CHAT_MAX
+        value: 30
+      - key: ENABLE_SOCKET_IO
+        value: true
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_PASS_ID
+        sync: false
+      - key: STRIPE_PRICE_SUBSCRIPTION_ID
+        sync: false
+      - key: PAYWALL_MODE
+        value: live
+      - key: MEDIA_TOKEN_SECRET
+        sync: false
+      - key: MEDIA_TOKEN_TTL_MS
+        value: 600000
+      - key: ALLOW_PUBLIC_UPLOADS
+        value: false
