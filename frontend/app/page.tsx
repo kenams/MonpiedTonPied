@@ -332,9 +332,9 @@ export default function Home() {
                             onClick={() => {
                                 if (canOpenPreview) setPreviewOpen(true);
                             }}
-                            className={`relative h-48 w-full rounded-3xl bg-white/5 border border-white/5 overflow-hidden ${
+                            className={`relative aspect-square w-full max-w-sm rounded-3xl bg-white/5 border border-white/5 overflow-hidden ${
                                 canOpenPreview ? 'cursor-zoom-in' : 'cursor-default'
-                            }`}
+                            } mx-auto`}
                         >
                             {detailLoading ? (
                                 <div className="h-full w-full animate-pulse bg-white/10" />

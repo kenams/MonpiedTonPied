@@ -67,6 +67,7 @@ export default function CreatorProfilePage({
     const [reportOpen, setReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [reportDetails, setReportDetails] = useState('');
+    const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
     const autoChatTriggeredRef = useRef(false);
 
     useEffect(() => {
@@ -327,9 +328,14 @@ export default function CreatorProfilePage({
         );
     }
 
-    const visibleContents = hasFullAccess || showAllGallery
-        ? creator.contents
-        : creator.contents.slice(0, 1);
+    const visibleContents =
+        hasFullAccess || showAllGallery ? creator.contents : creator.contents.slice(0, 1);
+    const activePreview =
+        visibleContents.find((item) => item.id === activePreviewId) || null;
+    const activePreviewUrl = resolveMediaUrl(activePreview?.previewUrl || null);
+    const activePreviewIsVideo = activePreview ? isVideoPreview(activePreview) : false;
+    const activePreviewLimited =
+        Boolean(activePreview && activePreviewIsVideo && activePreview.isPreview && !hasFullAccess);
 
     return (
         <div className="min-h-screen">
@@ -434,17 +440,22 @@ export default function CreatorProfilePage({
                                         key={item.id}
                                         className="rounded-2xl bg-white/5 shadow-lg overflow-hidden border border-white/5"
                                     >
-                                        <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => mediaUrl && setActivePreviewId(item.id)}
+                                            className={`relative aspect-square w-full bg-gradient-to-br from-[#1b1622] to-[#2a2018] ${
+                                                mediaUrl ? 'cursor-zoom-in' : 'cursor-default'
+                                            }`}
+                                        >
                                             {mediaUrl ? (
                                                 videoPreview ? (
                                                     <video
                                                         src={mediaUrl}
                                                         muted
                                                         playsInline
-                                                        controls
-                                                        controlsList="nodownload noplaybackrate noremoteplayback"
                                                         disablePictureInPicture
                                                         onContextMenu={(event) => event.preventDefault()}
+                                                        loop
                                                         onTimeUpdate={(event) => {
                                                             if (
                                                                 limitPreview &&
@@ -480,6 +491,11 @@ export default function CreatorProfilePage({
                                                         : t('creatorProfile.previewLabelPhoto')}
                                                 </div>
                                             )}
+                                            {mediaUrl && (
+                                                <div className="absolute bottom-4 right-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
+                                                    {t('home.enlarge')}
+                                                </div>
+                                            )}
                                             {videoPreview && <WatermarkOverlay />}
                                             {!item.unlocked && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
@@ -488,7 +504,7 @@ export default function CreatorProfilePage({
                                                     </span>
                                                 </div>
                                             )}
-                                        </div>
+                                        </button>
                                         <div className="p-4 space-y-2">
                                             <p className="font-semibold text-[#f4ede3]">
                                                 {item.title}
@@ -643,6 +659,70 @@ export default function CreatorProfilePage({
                     </div>
                 </div>
             </div>
+            {activePreview && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                    <div
+                        className="absolute inset-0 bg-black/70"
+                        onClick={() => setActivePreviewId(null)}
+                    />
+                    <div className="relative z-10 w-full max-w-4xl">
+                        <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
+                                    {activePreview.title}
+                                </p>
+                                <button
+                                    onClick={() => setActivePreviewId(null)}
+                                    className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8]"
+                                >
+                                    {t('common.close')}
+                                </button>
+                            </div>
+                            <div className="aspect-video rounded-2xl bg-black/40 overflow-hidden border border-white/10 relative">
+                                {activePreviewUrl ? (
+                                    activePreviewIsVideo ? (
+                                        <video
+                                            src={activePreviewUrl}
+                                            controls
+                                            muted
+                                            playsInline
+                                            controlsList="nodownload noplaybackrate noremoteplayback"
+                                            disablePictureInPicture
+                                            onContextMenu={(event) => event.preventDefault()}
+                                            onTimeUpdate={(event) => {
+                                                if (
+                                                    activePreviewLimited &&
+                                                    event.currentTarget.currentTime >
+                                                        PREVIEW_SECONDS
+                                                ) {
+                                                    event.currentTarget.pause();
+                                                    event.currentTarget.currentTime = 0;
+                                                }
+                                            }}
+                                            className={`h-full w-full object-contain ${
+                                                !activePreview.unlocked ? 'blur-md' : ''
+                                            }`}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={activePreviewUrl}
+                                            alt={activePreview.title}
+                                            className={`h-full w-full object-contain ${
+                                                !activePreview.unlocked ? 'blur-md' : ''
+                                            }`}
+                                        />
+                                    )
+                                ) : (
+                                    <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
+                                        {t('creatorProfile.previewFallback')}
+                                    </div>
+                                )}
+                                {activePreviewIsVideo && <WatermarkOverlay />}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             <Footer />
         </div>
     );

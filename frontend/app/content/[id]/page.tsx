@@ -143,6 +143,7 @@ export default function ContentPage({
     const [reportOpen, setReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [reportDetails, setReportDetails] = useState('');
+    const [activeFileIndex, setActiveFileIndex] = useState<number | null>(null);
 
     const token = getAuthToken();
 
@@ -312,6 +313,11 @@ export default function ContentPage({
     }
 
     const price = content.files?.[0]?.price;
+    const activeFile =
+        activeFileIndex !== null ? content.files[activeFileIndex] || null : null;
+    const activeFileUrl = activeFile ? resolveMediaUrl(activeFile.url) : null;
+    const activeFilePreviewLimited =
+        Boolean(activeFile && content.isPreview && !content.canAccess && activeFileIndex === 0);
 
     return (
         <div className="min-h-screen">
@@ -363,7 +369,13 @@ export default function ContentPage({
                                         key={`${file.url}-${index}`}
                                         className="rounded-3xl bg-white/5 shadow-lg overflow-hidden border border-white/5"
                                     >
-                                        <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => mediaUrl && setActiveFileIndex(index)}
+                                            className={`relative aspect-square w-full bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center ${
+                                                mediaUrl ? 'cursor-zoom-in' : 'cursor-default'
+                                            }`}
+                                        >
                                             {!mediaUrl ? (
                                                 <div className="text-sm text-[#b7ad9c]">
                                                     {copy.previewUnavailable}
@@ -403,6 +415,11 @@ export default function ContentPage({
                                                     {copy.preview10}
                                                 </div>
                                             )}
+                                            {mediaUrl && (
+                                                <div className="absolute bottom-4 right-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
+                                                    {locale === 'fr' ? 'Agrandir' : 'Enlarge'}
+                                                </div>
+                                            )}
                                             {file.type.startsWith('video') && <WatermarkOverlay />}
                                             {file.isLocked && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -411,7 +428,7 @@ export default function ContentPage({
                                                     </span>
                                                 </div>
                                             )}
-                                        </div>
+                                        </button>
                                         <div className="p-4 text-sm text-[#b7ad9c]">
                                             {index === 0 && limitPreview
                                                 ? copy.preview10
@@ -531,6 +548,73 @@ export default function ContentPage({
                     </div>
                 </div>
             </div>
+            {activeFile && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                    <div
+                        className="absolute inset-0 bg-black/70"
+                        onClick={() => setActiveFileIndex(null)}
+                    />
+                    <div className="relative z-10 w-full max-w-4xl">
+                        <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
+                                    {content.title}
+                                </p>
+                                <button
+                                    onClick={() => setActiveFileIndex(null)}
+                                    className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8]"
+                                >
+                                    {locale === 'fr' ? 'Fermer' : 'Close'}
+                                </button>
+                            </div>
+                            <div className="aspect-video rounded-2xl bg-black/40 overflow-hidden border border-white/10 relative">
+                                {!activeFileUrl ? (
+                                    <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
+                                        {copy.previewUnavailable}
+                                    </div>
+                                ) : activeFile.type.startsWith('video') ? (
+                                    <video
+                                        src={activeFileUrl}
+                                        controls={!activeFile.isLocked}
+                                        controlsList="nodownload noplaybackrate noremoteplayback"
+                                        disablePictureInPicture
+                                        onContextMenu={(event) => event.preventDefault()}
+                                        onTimeUpdate={(event) => {
+                                            if (
+                                                activeFilePreviewLimited &&
+                                                event.currentTarget.currentTime >
+                                                    PREVIEW_SECONDS
+                                            ) {
+                                                event.currentTarget.pause();
+                                                event.currentTarget.currentTime = 0;
+                                            }
+                                        }}
+                                        className={`h-full w-full object-contain ${
+                                            activeFile.isLocked ? 'blur-md' : ''
+                                        }`}
+                                    />
+                                ) : (
+                                    <img
+                                        src={activeFileUrl}
+                                        alt={content.title}
+                                        className={`h-full w-full object-contain ${
+                                            activeFile.isLocked ? 'blur-md' : ''
+                                        }`}
+                                    />
+                                )}
+                                {activeFile.type.startsWith('video') && <WatermarkOverlay />}
+                                {activeFile.isLocked && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                        <span className="rounded-full bg-[#15131b] px-4 py-2 text-sm font-semibold text-[#f0d8ac] border border-white/10">
+                                            {copy.unlockToView}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             <Footer />
         </div>
     );

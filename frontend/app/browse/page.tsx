@@ -86,6 +86,8 @@ export default function BrowsePage() {
                   ctaSubtitle:
                       "Le pass ou l'abonnement debloquent les series premium et le chat.",
                   ctaPrimary: 'Voir les offres',
+                  enlarge: 'Agrandir',
+                  close: 'Fermer',
               }
             : {
                   loadError: 'Unable to load content right now.',
@@ -120,10 +122,13 @@ export default function BrowsePage() {
                   ctaSubtitle:
                       'The pass or subscription unlocks premium series and chat.',
                   ctaPrimary: 'View offers',
+                  enlarge: 'Enlarge',
+                  close: 'Close',
               };
     const [content, setContent] = useState<ContentItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     const fetchContent = useCallback(async () => {
         setLoading(true);
@@ -266,7 +271,7 @@ export default function BrowsePage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {content.map((item) => {
+                        {content.map((item, index) => {
                             const imageUrl = resolveMediaUrl(item.previewUrl);
                             const hasImage = imageUrl && !imageUrl.includes('placeholder-image');
                             const isVideo = /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(imageUrl);
@@ -277,7 +282,13 @@ export default function BrowsePage() {
                                     key={item._id}
                                     className="rounded-3xl bg-white/5 shadow-lg overflow-hidden hover:shadow-2xl transition border border-white/5"
                                 >
-                                    <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => hasImage && setActiveIndex(index)}
+                                        className={`relative aspect-square w-full bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center ${
+                                            hasImage ? 'cursor-zoom-in' : 'cursor-default'
+                                        }`}
+                                    >
                                         {hasImage ? (
                                             isVideo ? (
                                                 <video
@@ -299,6 +310,11 @@ export default function BrowsePage() {
                                         ) : (
                                             <div className="text-sm text-[#b7ad9c]">{copy.preview}</div>
                                         )}
+                                        {hasImage && (
+                                            <div className="absolute bottom-4 right-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
+                                                {copy.enlarge}
+                                            </div>
+                                        )}
                                         {isVideo && <WatermarkOverlay />}
                                         {isLocked && (
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
@@ -307,7 +323,7 @@ export default function BrowsePage() {
                                                 </span>
                                             </div>
                                         )}
-                                    </div>
+                                    </button>
                                     <div className="p-5 space-y-3">
                                         <div className="flex items-center justify-between text-sm text-[#b7ad9c]">
                                             {item.creator.id ? (
@@ -362,6 +378,71 @@ export default function BrowsePage() {
                     primaryHref="/offers"
                 />
             </div>
+            {activeIndex !== null && content[activeIndex] && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                    <div
+                        className="absolute inset-0 bg-black/70"
+                        onClick={() => setActiveIndex(null)}
+                    />
+                    <div className="relative z-10 w-full max-w-4xl">
+                        <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
+                                    {content[activeIndex].title}
+                                </p>
+                                <button
+                                    onClick={() => setActiveIndex(null)}
+                                    className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8]"
+                                >
+                                    {copy.close}
+                                </button>
+                            </div>
+                            <div className="aspect-video rounded-2xl bg-black/40 overflow-hidden border border-white/10 relative">
+                                {(() => {
+                                    const item = content[activeIndex];
+                                    const imageUrl = resolveMediaUrl(item.previewUrl);
+                                    const isVideo =
+                                        Boolean(imageUrl) &&
+                                        /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(imageUrl);
+                                    const isLocked = !item.unlocked;
+
+                                    if (!imageUrl || imageUrl.includes('placeholder-image')) {
+                                        return (
+                                            <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
+                                                {copy.preview}
+                                            </div>
+                                        );
+                                    }
+
+                                    return isVideo ? (
+                                        <>
+                                            <video
+                                                src={imageUrl}
+                                                controls={!isLocked}
+                                                controlsList="nodownload noplaybackrate noremoteplayback"
+                                                disablePictureInPicture
+                                                onContextMenu={(event) => event.preventDefault()}
+                                                className={`h-full w-full object-contain ${
+                                                    isLocked ? 'blur-md' : ''
+                                                }`}
+                                            />
+                                            <WatermarkOverlay />
+                                        </>
+                                    ) : (
+                                        <img
+                                            src={imageUrl}
+                                            alt={item.title}
+                                            className={`h-full w-full object-contain ${
+                                                isLocked ? 'blur-md' : ''
+                                            }`}
+                                        />
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             <Footer />
         </div>
     );
