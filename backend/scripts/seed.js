@@ -166,25 +166,45 @@ async function seedDatabase() {
                 title: 'LaBresilienne - Video 01',
                 description: 'Apercu exclusif LaBresilienne.',
                 creator: model._id,
-                files: [{ url: '/uploads/labresilienne/Snapchat-102772131.mp4', type: 'video/mp4' }],
+                files: [
+                    {
+                        url: 'https://res.cloudinary.com/dora2euif/video/upload/v1773430351/Snapchat-102772131_ml5boq.mp4',
+                        type: 'video/mp4',
+                    },
+                ],
             },
             {
                 title: 'LaBresilienne - Video 02',
                 description: 'Serie premium LaBresilienne.',
                 creator: model._id,
-                files: [{ url: '/uploads/labresilienne/Snapchat-1057577605.mp4', type: 'video/mp4' }],
+                files: [
+                    {
+                        url: 'https://res.cloudinary.com/dora2euif/video/upload/v1773430351/Snapchat-1057577605_anafd1.mp4',
+                        type: 'video/mp4',
+                    },
+                ],
             },
             {
                 title: 'LaBresilienne - Video 03',
                 description: 'Collection prives LaBresilienne.',
                 creator: model._id,
-                files: [{ url: '/uploads/labresilienne/Snapchat-163084523.mp4', type: 'video/mp4' }],
+                files: [
+                    {
+                        url: 'https://res.cloudinary.com/dora2euif/video/upload/v1773430352/Snapchat-163084523_ae3ijd.mp4',
+                        type: 'video/mp4',
+                    },
+                ],
             },
             {
                 title: 'LaBresilienne - Video 04',
                 description: 'Set exclusif LaBresilienne.',
                 creator: model._id,
-                files: [{ url: '/uploads/labresilienne/Snapchat-520040514.mp4', type: 'video/mp4' }],
+                files: [
+                    {
+                        url: 'https://res.cloudinary.com/dora2euif/video/upload/v1773430352/Snapchat-520040514_ewfcqr.mp4',
+                        type: 'video/mp4',
+                    },
+                ],
             },
         ];
 
@@ -195,6 +215,10 @@ async function seedDatabase() {
             });
             if (!existing) {
                 await Content.create(item);
+            } else {
+                existing.description = item.description;
+                existing.files = item.files;
+                await existing.save();
             }
         }
 
