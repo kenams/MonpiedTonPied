@@ -5,6 +5,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { apiUrl } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
+import { useLocale } from '../components/LocaleProvider';
 
 type AdminUser = {
     id: string;
@@ -64,6 +65,115 @@ const buildQueryString = (params: Record<string, string | number>) => {
 };
 
 export default function AdminPage() {
+    const { locale } = useLocale();
+    const copy =
+        locale === 'fr'
+            ? {
+                  admin: 'Admin',
+                  title: 'Console de moderation',
+                  loginRequired: "Connecte-toi pour acceder a l'admin.",
+                  accessDenied: 'Acces admin refuse.',
+                  adminError: 'Erreur admin.',
+                  loadError: 'Impossible de charger les donnees admin.',
+                  actionError: 'Action impossible.',
+                  suspendError: 'Impossible de modifier le statut.',
+                  downloadError: 'Download impossible',
+                  exportError: 'Export CSV impossible.',
+                  page: 'page',
+                  prev: 'Prev',
+                  next: 'Next',
+                  users: 'Utilisateurs',
+                  subscriptions: 'Abonnements',
+                  payments: 'Paiements',
+                  audit: 'Audit trail',
+                  exportCsv: 'Export CSV filtre',
+                  userSearch: 'Recherche email, pseudo ou nom',
+                  allRoles: 'Tous les roles',
+                  premiumAll: 'Premium: tous',
+                  premiumYes: 'Premium: oui',
+                  premiumNo: 'Premium: non',
+                  subscriptionsAll: 'Abonnement: tous',
+                  passAll: 'Pass: tous',
+                  emailAll: 'Email: tous',
+                  emailVerified: 'Email: verifie',
+                  emailUnverified: 'Email: non verifie',
+                  suspensionAll: 'Suspension: tous',
+                  suspended: 'Suspendu',
+                  active: 'Actif',
+                  subscriptionLabel: 'Abonnement',
+                  passLabel: 'Pass',
+                  reactivate: 'Re-activer',
+                  suspend: 'Suspendre',
+                  userFallback: 'Utilisateur',
+                  status: 'Statut',
+                  end: 'Fin',
+                  na: 'n/a',
+                  paymentSearch: 'Recherche session, intent ou facture',
+                  allTypes: 'Type: tous',
+                  allStatuses: 'Statut: tous',
+                  auditSearch: 'Recherche action, cible ou id',
+                  auditAction: 'Action exacte ex: user.suspend',
+                  adminLabel: 'Admin',
+                  unknown: 'Inconnu',
+                  target: 'Cible',
+                  usersCount: 'utilisateurs',
+                  subscriptionsCount: 'abonnements',
+                  paymentsCount: 'paiements',
+                  logsCount: 'logs',
+              }
+            : {
+                  admin: 'Admin',
+                  title: 'Moderation console',
+                  loginRequired: 'Sign in to access admin.',
+                  accessDenied: 'Admin access denied.',
+                  adminError: 'Admin error.',
+                  loadError: 'Unable to load admin data.',
+                  actionError: 'Action unavailable.',
+                  suspendError: 'Unable to update status.',
+                  downloadError: 'Download unavailable.',
+                  exportError: 'CSV export unavailable.',
+                  page: 'page',
+                  prev: 'Prev',
+                  next: 'Next',
+                  users: 'Users',
+                  subscriptions: 'Subscriptions',
+                  payments: 'Payments',
+                  audit: 'Audit trail',
+                  exportCsv: 'Export filtered CSV',
+                  userSearch: 'Search email, username, or name',
+                  allRoles: 'All roles',
+                  premiumAll: 'Premium: all',
+                  premiumYes: 'Premium: yes',
+                  premiumNo: 'Premium: no',
+                  subscriptionsAll: 'Subscription: all',
+                  passAll: 'Pass: all',
+                  emailAll: 'Email: all',
+                  emailVerified: 'Email: verified',
+                  emailUnverified: 'Email: unverified',
+                  suspensionAll: 'Suspension: all',
+                  suspended: 'Suspended',
+                  active: 'Active',
+                  subscriptionLabel: 'Subscription',
+                  passLabel: 'Pass',
+                  reactivate: 'Reactivate',
+                  suspend: 'Suspend',
+                  userFallback: 'User',
+                  status: 'Status',
+                  end: 'End',
+                  na: 'n/a',
+                  paymentSearch: 'Search session, intent, or invoice',
+                  allTypes: 'Type: all',
+                  allStatuses: 'Status: all',
+                  auditSearch: 'Search action, target, or id',
+                  auditAction: 'Exact action e.g. user.suspend',
+                  adminLabel: 'Admin',
+                  unknown: 'Unknown',
+                  target: 'Target',
+                  usersCount: 'users',
+                  subscriptionsCount: 'subscriptions',
+                  paymentsCount: 'payments',
+                  logsCount: 'logs',
+              };
     const token = getAuthToken();
     const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
     const [users, setUsers] = useState<AdminUser[]>([]);
@@ -177,7 +287,7 @@ export default function AdminPage() {
                     });
                     const data = await response.json();
                     if (!response.ok) {
-                        throw new Error(data.message || 'Erreur admin.');
+                        throw new Error(data.message || copy.adminError);
                     }
                     setUsers(Array.isArray(data.items) ? data.items : []);
                     setUsersTotal(Number(data.total || 0));
@@ -191,7 +301,7 @@ export default function AdminPage() {
                     );
                     const data = await response.json();
                     if (!response.ok) {
-                        throw new Error(data.message || 'Erreur admin.');
+                        throw new Error(data.message || copy.adminError);
                     }
                     setSubscriptions(Array.isArray(data.items) ? data.items : []);
                     setSubscriptionsTotal(Number(data.total || 0));
@@ -205,7 +315,7 @@ export default function AdminPage() {
                     );
                     const data = await response.json();
                     if (!response.ok) {
-                        throw new Error(data.message || 'Erreur admin.');
+                        throw new Error(data.message || copy.adminError);
                     }
                     setPayments(Array.isArray(data.items) ? data.items : []);
                     setPaymentsTotal(Number(data.total || 0));
@@ -217,7 +327,7 @@ export default function AdminPage() {
                 });
                 const data = await response.json();
                 if (!response.ok) {
-                    throw new Error(data.message || 'Erreur admin.');
+                    throw new Error(data.message || copy.adminError);
                 }
                 setAuditLogs(Array.isArray(data.items) ? data.items : []);
                 setAuditTotal(Number(data.total || 0));
@@ -225,7 +335,7 @@ export default function AdminPage() {
                 setError(
                     fetchError instanceof Error
                         ? fetchError.message
-                        : 'Impossible de charger les donnees admin.'
+                        : copy.loadError
                 );
             }
         };
@@ -234,6 +344,8 @@ export default function AdminPage() {
     }, [
         activeTab,
         auditQueryString,
+        copy.adminError,
+        copy.loadError,
         headers,
         isAdmin,
         paymentQueryString,
@@ -253,7 +365,7 @@ export default function AdminPage() {
                 body: JSON.stringify({ suspended: !user.isSuspended }),
             });
             if (!response.ok) {
-                throw new Error('Action impossible');
+                throw new Error(copy.actionError);
             }
             setUsers((prev) =>
                 prev.map((item) =>
@@ -261,7 +373,7 @@ export default function AdminPage() {
                 )
             );
         } catch {
-            setError('Impossible de modifier le statut.');
+            setError(copy.suspendError);
         }
     };
 
@@ -272,7 +384,7 @@ export default function AdminPage() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) {
-                throw new Error('Download impossible');
+                throw new Error(copy.downloadError);
             }
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -284,7 +396,7 @@ export default function AdminPage() {
             link.remove();
             window.URL.revokeObjectURL(url);
         } catch {
-            setError('Export CSV impossible.');
+            setError(copy.exportError);
         }
     };
 
@@ -296,14 +408,14 @@ export default function AdminPage() {
     ) => (
         <div className="flex items-center justify-between text-xs text-[#b7ad9c]">
             <span>
-                {total} {label} - page {page}
+                {total} {label} - {copy.page} {page}
             </span>
             <div className="flex gap-2">
                 <button
                     onClick={() => setPage((prev) => Math.max(Number(prev) - 1, 1))}
                     className="rounded-full border border-white/10 px-3 py-1"
                 >
-                    Prev
+                    {copy.prev}
                 </button>
                 <button
                     onClick={() =>
@@ -313,7 +425,7 @@ export default function AdminPage() {
                     }
                     className="rounded-full border border-white/10 px-3 py-1"
                 >
-                    Next
+                    {copy.next}
                 </button>
             </div>
         </div>
@@ -324,19 +436,17 @@ export default function AdminPage() {
             <Navigation />
             <div className="mx-auto max-w-6xl space-y-6 px-6 py-12">
                 <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-[0.35em] text-[#d8c7a8]">Admin</p>
-                    <h1 className="text-3xl font-semibold text-[#f4ede3]">
-                        Console de moderation
-                    </h1>
+                    <p className="text-xs uppercase tracking-[0.35em] text-[#d8c7a8]">{copy.admin}</p>
+                    <h1 className="text-3xl font-semibold text-[#f4ede3]">{copy.title}</h1>
                 </div>
                 {!token && (
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                        Connecte-toi pour acceder a l&apos;admin.
+                        {copy.loginRequired}
                     </div>
                 )}
                 {isAdmin === false && token && (
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                        Acces admin refuse.
+                        {copy.accessDenied}
                     </div>
                 )}
                 {error && (
@@ -358,7 +468,7 @@ export default function AdminPage() {
                                             : 'border-white/10 text-[#d6cbb8]'
                                     }`}
                                 >
-                                    {tab}
+                                    {copy[tab]}
                                 </button>
                             ))}
                         </div>
@@ -367,7 +477,7 @@ export default function AdminPage() {
                             <div className="space-y-4 rounded-3xl border border-white/5 bg-white/5 p-6 shadow-lg">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-xl font-semibold text-[#f4ede3]">
-                                        Utilisateurs
+                                        {copy.users}
                                     </h2>
                                     <button
                                         onClick={() =>
@@ -378,7 +488,7 @@ export default function AdminPage() {
                                         }
                                         className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac]"
                                     >
-                                        Export CSV filtre
+                                        {copy.exportCsv}
                                     </button>
                                 </div>
                                 <div className="flex flex-col gap-3">
@@ -389,7 +499,7 @@ export default function AdminPage() {
                                                 setUserQuery(event.target.value);
                                                 setUserPage(1);
                                             }}
-                                            placeholder="Recherche email, pseudo ou nom"
+                                            placeholder={copy.userSearch}
                                             className="flex-1 rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                         />
                                         <select
@@ -400,7 +510,7 @@ export default function AdminPage() {
                                             }}
                                             className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                         >
-                                            <option value="">Tous les roles</option>
+                                            <option value="">{copy.allRoles}</option>
                                             <option value="consumer">consumer</option>
                                             <option value="creator">creator</option>
                                             <option value="admin">admin</option>
@@ -413,9 +523,9 @@ export default function AdminPage() {
                                             }}
                                             className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                         >
-                                            <option value="">Premium: tous</option>
-                                            <option value="true">Premium: oui</option>
-                                            <option value="false">Premium: non</option>
+                                            <option value="">{copy.premiumAll}</option>
+                                            <option value="true">{copy.premiumYes}</option>
+                                            <option value="false">{copy.premiumNo}</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-3 sm:flex-row">
@@ -427,7 +537,7 @@ export default function AdminPage() {
                                             }}
                                             className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                         >
-                                            <option value="">Abonnement: tous</option>
+                                            <option value="">{copy.subscriptionsAll}</option>
                                             <option value="active">active</option>
                                             <option value="pending">pending</option>
                                             <option value="expired">expired</option>
@@ -443,7 +553,7 @@ export default function AdminPage() {
                                             }}
                                             className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                         >
-                                            <option value="">Pass: tous</option>
+                                            <option value="">{copy.passAll}</option>
                                             <option value="active">active</option>
                                             <option value="expired">expired</option>
                                             <option value="none">none</option>
@@ -457,9 +567,9 @@ export default function AdminPage() {
                                             }}
                                             className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                         >
-                                            <option value="">Email: tous</option>
-                                            <option value="true">Email: verifie</option>
-                                            <option value="false">Email: non verifie</option>
+                                            <option value="">{copy.emailAll}</option>
+                                            <option value="true">{copy.emailVerified}</option>
+                                            <option value="false">{copy.emailUnverified}</option>
                                         </select>
                                         <select
                                             value={suspendedFilter}
@@ -469,9 +579,9 @@ export default function AdminPage() {
                                             }}
                                             className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                         >
-                                            <option value="">Suspension: tous</option>
-                                            <option value="true">Suspendu</option>
-                                            <option value="false">Actif</option>
+                                            <option value="">{copy.suspensionAll}</option>
+                                            <option value="true">{copy.suspended}</option>
+                                            <option value="false">{copy.active}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -489,7 +599,7 @@ export default function AdminPage() {
                                                     {user.email} - {user.role}
                                                 </p>
                                                 <p className="text-xs text-[#b7ad9c]">
-                                                    Abonnement: {user.subscriptionStatus || 'none'} - Pass:{' '}
+                                                    {copy.subscriptionLabel}: {user.subscriptionStatus || 'none'} - {copy.passLabel}:{' '}
                                                     {user.passStatus || 'none'}
                                                 </p>
                                             </div>
@@ -497,19 +607,19 @@ export default function AdminPage() {
                                                 onClick={() => toggleSuspend(user)}
                                                 className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac]"
                                             >
-                                                {user.isSuspended ? 'Re-activer' : 'Suspendre'}
+                                                {user.isSuspended ? copy.reactivate : copy.suspend}
                                             </button>
                                         </div>
                                     ))}
                                 </div>
-                                {renderPager(usersTotal, userPage, setUserPage, 'utilisateurs')}
+                                {renderPager(usersTotal, userPage, setUserPage, copy.usersCount)}
                             </div>
                         )}
 
                         {activeTab === 'subscriptions' && (
                             <div className="space-y-4 rounded-3xl border border-white/5 bg-white/5 p-6 shadow-lg">
                                 <h2 className="text-xl font-semibold text-[#f4ede3]">
-                                    Abonnements
+                                    {copy.subscriptions}
                                 </h2>
                                 <div className="space-y-3">
                                     {subscriptions.map((sub) => (
@@ -518,13 +628,13 @@ export default function AdminPage() {
                                             className="rounded-2xl border border-white/10 bg-[#15131b] p-4"
                                         >
                                             <p className="font-semibold text-[#f4ede3]">
-                                                {sub.user?.displayName || sub.user?.email || 'Utilisateur'}
+                                                {sub.user?.displayName || sub.user?.email || copy.userFallback}
                                             </p>
                                             <p className="text-xs text-[#b7ad9c]">
-                                                Statut: {sub.status} - Fin:{' '}
+                                                {copy.status}: {sub.status} - {copy.end}:{' '}
                                                 {sub.currentPeriodEnd
                                                     ? new Date(sub.currentPeriodEnd).toLocaleDateString()
-                                                    : 'n/a'}
+                                                    : copy.na}
                                             </p>
                                         </div>
                                     ))}
@@ -533,7 +643,7 @@ export default function AdminPage() {
                                     subscriptionsTotal,
                                     subPage,
                                     setSubPage,
-                                    'abonnements'
+                                    copy.subscriptionsCount
                                 )}
                             </div>
                         )}
@@ -542,7 +652,7 @@ export default function AdminPage() {
                             <div className="space-y-4 rounded-3xl border border-white/5 bg-white/5 p-6 shadow-lg">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-xl font-semibold text-[#f4ede3]">
-                                        Paiements
+                                        {copy.payments}
                                     </h2>
                                     <button
                                         onClick={() =>
@@ -553,7 +663,7 @@ export default function AdminPage() {
                                         }
                                         className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac]"
                                     >
-                                        Export CSV filtre
+                                        {copy.exportCsv}
                                     </button>
                                 </div>
                                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -563,7 +673,7 @@ export default function AdminPage() {
                                             setPaymentQuery(event.target.value);
                                             setPayPage(1);
                                         }}
-                                        placeholder="Recherche session, intent ou facture"
+                                        placeholder={copy.paymentSearch}
                                         className="flex-1 rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                     />
                                     <select
@@ -574,7 +684,7 @@ export default function AdminPage() {
                                         }}
                                         className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                     >
-                                        <option value="">Type: tous</option>
+                                        <option value="">{copy.allTypes}</option>
                                         <option value="subscription">subscription</option>
                                         <option value="pass">pass</option>
                                         <option value="content_purchase">content_purchase</option>
@@ -588,7 +698,7 @@ export default function AdminPage() {
                                         }}
                                         className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                     >
-                                        <option value="">Statut: tous</option>
+                                        <option value="">{copy.allStatuses}</option>
                                         <option value="pending">pending</option>
                                         <option value="paid">paid</option>
                                         <option value="failed">failed</option>
@@ -602,7 +712,7 @@ export default function AdminPage() {
                                             className="rounded-2xl border border-white/10 bg-[#15131b] p-4"
                                         >
                                             <p className="font-semibold text-[#f4ede3]">
-                                                {payment.user?.displayName || payment.user?.email || 'Utilisateur'}
+                                                {payment.user?.displayName || payment.user?.email || copy.userFallback}
                                             </p>
                                             <p className="text-xs text-[#b7ad9c]">
                                                 {payment.type} - {payment.status} - {payment.amount}{' '}
@@ -611,14 +721,14 @@ export default function AdminPage() {
                                         </div>
                                     ))}
                                 </div>
-                                {renderPager(paymentsTotal, payPage, setPayPage, 'paiements')}
+                                {renderPager(paymentsTotal, payPage, setPayPage, copy.paymentsCount)}
                             </div>
                         )}
 
                         {activeTab === 'audit' && (
                             <div className="space-y-4 rounded-3xl border border-white/5 bg-white/5 p-6 shadow-lg">
                                 <h2 className="text-xl font-semibold text-[#f4ede3]">
-                                    Audit trail
+                                    {copy.audit}
                                 </h2>
                                 <div className="flex flex-col gap-3 sm:flex-row">
                                     <input
@@ -627,7 +737,7 @@ export default function AdminPage() {
                                             setAuditQuery(event.target.value);
                                             setAuditPage(1);
                                         }}
-                                        placeholder="Recherche action, cible ou id"
+                                        placeholder={copy.auditSearch}
                                         className="flex-1 rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                     />
                                     <input
@@ -636,7 +746,7 @@ export default function AdminPage() {
                                             setAuditActionFilter(event.target.value);
                                             setAuditPage(1);
                                         }}
-                                        placeholder="Action exacte ex: user.suspend"
+                                        placeholder={copy.auditAction}
                                         className="rounded-xl border border-white/10 bg-[#101016] px-4 py-2 text-sm text-[#f4ede3]"
                                     />
                                 </div>
@@ -650,14 +760,14 @@ export default function AdminPage() {
                                                 {entry.action}
                                             </p>
                                             <p className="text-xs text-[#b7ad9c]">
-                                                Admin:{' '}
+                                                {copy.adminLabel}:{' '}
                                                 {entry.admin?.displayName ||
                                                     entry.admin?.email ||
-                                                    'Inconnu'}
+                                                    copy.unknown}
                                             </p>
                                             <p className="text-xs text-[#b7ad9c]">
-                                                Cible: {entry.targetType || 'n/a'} -{' '}
-                                                {entry.targetId || 'n/a'}
+                                                {copy.target}: {entry.targetType || copy.na} -{' '}
+                                                {entry.targetId || copy.na}
                                             </p>
                                             {entry.details && (
                                                 <pre className="mt-2 overflow-x-auto rounded-xl bg-black/20 p-3 text-xs text-[#8f8778]">
@@ -667,12 +777,12 @@ export default function AdminPage() {
                                             <p className="mt-2 text-xs text-[#6f675a]">
                                                 {entry.createdAt
                                                     ? new Date(entry.createdAt).toLocaleString()
-                                                    : 'n/a'}
+                                                    : copy.na}
                                             </p>
                                         </div>
                                     ))}
                                 </div>
-                                {renderPager(auditTotal, auditPage, setAuditPage, 'logs')}
+                                {renderPager(auditTotal, auditPage, setAuditPage, copy.logsCount)}
                             </div>
                         )}
                     </div>

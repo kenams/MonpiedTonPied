@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { getAuthToken } from '../../lib/auth';
+import { useLocale } from '../../components/LocaleProvider';
 
 type DashboardData = {
     contentCount: number;
@@ -21,6 +22,41 @@ type DashboardData = {
 };
 
 export default function CreatorDashboardPage() {
+    const { locale } = useLocale();
+    const copy =
+        locale === 'fr'
+            ? {
+                  accessDenied: 'Acces refuse.',
+                  loadError: 'Erreur de chargement.',
+                  eyebrow: 'Dashboard creator',
+                  title: 'Performance et revenus',
+                  subtitle:
+                      'Suis tes ventes, demandes custom et revenus nets. Commission plateforme 20%.',
+                  loading: 'Chargement...',
+                  content: 'Contenus',
+                  grossSales: 'Ventes brutes',
+                  creatorRevenue: 'Revenus creator',
+                  platformFees: 'Commission plateforme',
+                  requestStatus: 'Statut des demandes',
+                  latestRequests: 'Dernieres demandes',
+                  noRecent: 'Aucune demande recente.',
+              }
+            : {
+                  accessDenied: 'Access denied.',
+                  loadError: 'Loading error.',
+                  eyebrow: 'Creator dashboard',
+                  title: 'Performance and revenue',
+                  subtitle:
+                      'Track your sales, custom requests, and net revenue. Platform fee: 20%.',
+                  loading: 'Loading...',
+                  content: 'Content',
+                  grossSales: 'Gross sales',
+                  creatorRevenue: 'Creator revenue',
+                  platformFees: 'Platform fee',
+                  requestStatus: 'Request status',
+                  latestRequests: 'Latest requests',
+                  noRecent: 'No recent requests.',
+              };
     const token = getAuthToken();
     const [data, setData] = useState<DashboardData | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -33,13 +69,13 @@ export default function CreatorDashboardPage() {
             .then((res) => res.json().then((json) => ({ ok: res.ok, json })))
             .then(({ ok, json }) => {
                 if (!ok) {
-                    setError(json.message || 'Acces refuse.');
+                    setError(json.message || copy.accessDenied);
                     return;
                 }
                 setData(json);
             })
-            .catch(() => setError('Erreur de chargement.'));
-    }, [token]);
+            .catch(() => setError(copy.loadError));
+    }, [copy.accessDenied, copy.loadError, token]);
 
     return (
         <div className="min-h-screen">
@@ -48,14 +84,10 @@ export default function CreatorDashboardPage() {
             <div className="max-w-6xl mx-auto px-6 py-12 space-y-10">
                 <div className="space-y-4">
                     <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
-                        Dashboard creator
+                        {copy.eyebrow}
                     </p>
-                    <h1 className="text-4xl font-semibold text-[#f4ede3]">
-                        Performance et revenus
-                    </h1>
-                    <p className="text-[#b7ad9c]">
-                        Suis tes ventes, demandes custom et revenus nets. Commission plateforme 20%.
-                    </p>
+                    <h1 className="text-4xl font-semibold text-[#f4ede3]">{copy.title}</h1>
+                    <p className="text-[#b7ad9c]">{copy.subtitle}</p>
                 </div>
 
                 {error && (
@@ -66,20 +98,20 @@ export default function CreatorDashboardPage() {
 
                 {!data ? (
                     <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 text-[#b7ad9c]">
-                        Chargement...
+                        {copy.loading}
                     </div>
                 ) : (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             {[
-                                { label: 'Contenus', value: data.contentCount },
-                                { label: 'Ventes brutes', value: `${data.totalSales} EUR` },
+                                { label: copy.content, value: data.contentCount },
+                                { label: copy.grossSales, value: `${data.totalSales} EUR` },
                                 {
-                                    label: 'Revenus creator',
+                                    label: copy.creatorRevenue,
                                     value: `${data.totalCreatorRevenue} EUR`,
                                 },
                                 {
-                                    label: 'Commission plateforme',
+                                    label: copy.platformFees,
                                     value: `${data.totalPlatformFees} EUR`,
                                 },
                             ].map((item) => (
@@ -98,7 +130,7 @@ export default function CreatorDashboardPage() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-3">
                                 <h2 className="text-xl font-semibold text-[#f4ede3]">
-                                    Statut des demandes
+                                    {copy.requestStatus}
                                 </h2>
                                 <div className="grid grid-cols-2 gap-3 text-sm text-[#b7ad9c]">
                                     {Object.entries(data.requestStats || {}).map(
@@ -116,12 +148,10 @@ export default function CreatorDashboardPage() {
 
                             <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-3">
                                 <h2 className="text-xl font-semibold text-[#f4ede3]">
-                                    Dernieres demandes
+                                    {copy.latestRequests}
                                 </h2>
                                 {data.latestRequests.length === 0 ? (
-                                    <p className="text-sm text-[#b7ad9c]">
-                                        Aucune demande recente.
-                                    </p>
+                                    <p className="text-sm text-[#b7ad9c]">{copy.noRecent}</p>
                                 ) : (
                                     <ul className="text-sm text-[#b7ad9c] space-y-2">
                                         {data.latestRequests.map((req) => (

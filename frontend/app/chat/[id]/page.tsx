@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -6,6 +6,7 @@ import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { getAuthToken } from '../../lib/auth';
+import { useLocale } from '../../components/LocaleProvider';
 
 type Message = {
     id: string;
@@ -15,6 +16,35 @@ type Message = {
 };
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+    const { locale } = useLocale();
+    const copy =
+        locale === 'fr'
+            ? {
+                  unavailable: 'Chat indisponible.',
+                  sendFailed: 'Message non envoye.',
+                  title: 'Chat direct',
+                  subtitle: 'Abonnement requis. Moderation active contre les propos abusifs.',
+                  loginRequired: 'Connecte-toi pour acceder au chat.',
+                  subRequired: 'Abonnement requis pour le chat.',
+                  empty: 'Aucun message pour le moment.',
+                  placeholder: 'Ecris un message...',
+                  send: 'Envoyer',
+                  login: 'Se connecter',
+                  subscribe: "S'abonner",
+              }
+            : {
+                  unavailable: 'Chat unavailable.',
+                  sendFailed: 'Message not sent.',
+                  title: 'Direct chat',
+                  subtitle: 'Subscription required. Active moderation against abusive messages.',
+                  loginRequired: 'Log in to access chat.',
+                  subRequired: 'A subscription is required for chat.',
+                  empty: 'No messages yet.',
+                  placeholder: 'Write a message...',
+                  send: 'Send',
+                  login: 'Log in',
+                  subscribe: 'Subscribe',
+              };
     const { id } = use(params);
     const token = getAuthToken();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -31,7 +61,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         if (response.ok) {
             setMessages(data);
         } else {
-            setError(data.message || 'Chat indisponible.');
+            setError(data.message || copy.unavailable);
         }
     };
 
@@ -63,7 +93,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         });
         const data = await response.json();
         if (!response.ok) {
-            setError(data.message || 'Message non envoye.');
+            setError(data.message || copy.sendFailed);
             return;
         }
         setText('');
@@ -76,12 +106,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
             <div className="max-w-5xl mx-auto px-6 py-12 space-y-6">
                 <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5">
-                    <h1 className="text-2xl font-semibold text-[#f4ede3]">
-                        Chat direct
-                    </h1>
-                    <p className="text-sm text-[#b7ad9c]">
-                        Abonnement requis. Moderation active contre les propos abusifs.
-                    </p>
+                    <h1 className="text-2xl font-semibold text-[#f4ede3]">{copy.title}</h1>
+                    <p className="text-sm text-[#b7ad9c]">{copy.subtitle}</p>
                 </div>
 
                 {error && (
@@ -93,19 +119,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-4">
                     {!token && (
                         <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                            Connecte-toi pour acceder au chat.
+                            {copy.loginRequired}
                         </div>
                     )}
                     {token && premiumAccess === false && (
                         <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                            Abonnement requis pour le chat.
+                            {copy.subRequired}
                         </div>
                     )}
                     <div className="space-y-3 max-h-[420px] overflow-auto">
                         {messages.length === 0 && (
-                            <p className="text-sm text-[#b7ad9c]">
-                                Aucun message pour le moment.
-                            </p>
+                            <p className="text-sm text-[#b7ad9c]">{copy.empty}</p>
                         )}
                         {messages.map((message) => (
                             <div
@@ -123,13 +147,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                 value={text}
                                 onChange={(event) => setText(event.target.value)}
                                 className="flex-1 rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
-                                placeholder="Ecris un message..."
+                                placeholder={copy.placeholder}
                             />
                             <button
                                 onClick={handleSend}
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-3 text-sm font-semibold"
                             >
-                                Envoyer
+                                {copy.send}
                             </button>
                         </div>
                     ) : (
@@ -139,14 +163,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                     href={`/auth/login?redirect=/chat/${id}`}
                                     className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-3 text-sm font-semibold text-center"
                                 >
-                                    Se connecter
+                                    {copy.login}
                                 </Link>
                             ) : (
                                 <Link
                                     href="/offers"
                                     className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-3 text-sm font-semibold text-center"
                                 >
-                                    S&apos;abonner
+                                    {copy.subscribe}
                                 </Link>
                             )}
                         </div>

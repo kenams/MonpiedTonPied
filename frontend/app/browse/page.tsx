@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 /* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -10,6 +10,7 @@ import { apiUrl } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
 import { resolveMediaUrl } from '../lib/media';
 import WatermarkOverlay from '../components/WatermarkOverlay';
+import { useLocale } from '../components/LocaleProvider';
 
 type ContentItem = {
     _id: string;
@@ -31,15 +32,95 @@ type ContentItem = {
     };
 };
 
-const filters = [
-    { label: 'Tout', hint: 'Tout le feed' },
-    { label: 'Nouveautes', hint: 'Dernieres sorties' },
-    { label: 'Tendance', hint: 'Top cette semaine' },
-    { label: 'Collection', hint: 'Series premium' },
-    { label: 'Favoris', hint: 'Tes choix' },
-];
+const filters = {
+    fr: [
+        { label: 'Tout', hint: 'Tout le feed' },
+        { label: 'Nouveautes', hint: 'Dernieres sorties' },
+        { label: 'Tendance', hint: 'Top cette semaine' },
+        { label: 'Collection', hint: 'Series premium' },
+        { label: 'Favoris', hint: 'Tes choix' },
+    ],
+    en: [
+        { label: 'All', hint: 'Entire feed' },
+        { label: 'New', hint: 'Latest releases' },
+        { label: 'Trending', hint: 'Top this week' },
+        { label: 'Collection', hint: 'Premium series' },
+        { label: 'Favorites', hint: 'Your picks' },
+    ],
+} as const;
 
 export default function BrowsePage() {
+    const { locale } = useLocale();
+    const copy =
+        locale === 'fr'
+            ? {
+                  loadError: 'Impossible de charger le contenu pour le moment.',
+                  eyebrow: 'Feed premium',
+                  title: 'Decouvre les collections du moment.',
+                  subtitle:
+                      'Selection sobre, contenus verifies et acces direct aux createurs les plus demandes.',
+                  premiumAccess: 'Acces premium',
+                  premiumLine: '1 photo ou 10s de video gratuits par createur.',
+                  premiumPrice: 'Pass 5.99 EUR (30 jours) ou abonnement 11.99 EUR.',
+                  createAccount: 'Creer un compte',
+                  login: 'Se connecter',
+                  collectionMode: 'Mode collection',
+                  collectionTitle: 'Une interface sobre, un contenu exigeant.',
+                  collectionBody:
+                      'Chaque creator est verifie. Les previews restent delicats, les collections completes sont reservees aux membres.',
+                  privacy: 'Confidentialite',
+                  moderation: 'Moderation',
+                  securePayments: 'Paiements securises',
+                  retry: 'Reessayer',
+                  empty: 'Aucun contenu disponible pour le moment.',
+                  preview: 'Preview',
+                  blurred: 'Floute',
+                  freePreview: 'Preview gratuite',
+                  locked: 'Verrouille',
+                  accessible: 'Accessible',
+                  views: 'vues',
+                  likes: 'likes',
+                  viewContent: 'Voir le contenu',
+                  unlock: 'Debloquer',
+                  ctaTitle: 'Accede aux collections completes.',
+                  ctaSubtitle:
+                      "Le pass ou l'abonnement debloquent les series premium et le chat.",
+                  ctaPrimary: 'Voir les offres',
+              }
+            : {
+                  loadError: 'Unable to load content right now.',
+                  eyebrow: 'Premium feed',
+                  title: 'Discover current collections.',
+                  subtitle:
+                      'Clean selection, verified content, and direct access to the most requested creators.',
+                  premiumAccess: 'Premium access',
+                  premiumLine: '1 free photo or 10 seconds of video per creator.',
+                  premiumPrice: '5.99 EUR pass (30 days) or 11.99 EUR subscription.',
+                  createAccount: 'Create account',
+                  login: 'Log in',
+                  collectionMode: 'Collection mode',
+                  collectionTitle: 'A clean interface, demanding content.',
+                  collectionBody:
+                      'Each creator is verified. Previews stay limited, full collections are reserved for members.',
+                  privacy: 'Privacy',
+                  moderation: 'Moderation',
+                  securePayments: 'Secure payments',
+                  retry: 'Retry',
+                  empty: 'No content available right now.',
+                  preview: 'Preview',
+                  blurred: 'Blurred',
+                  freePreview: 'Free preview',
+                  locked: 'Locked',
+                  accessible: 'Accessible',
+                  views: 'views',
+                  likes: 'likes',
+                  viewContent: 'View content',
+                  unlock: 'Unlock',
+                  ctaTitle: 'Unlock full collections.',
+                  ctaSubtitle:
+                      'The pass or subscription unlocks premium series and chat.',
+                  ctaPrimary: 'View offers',
+              };
     const [content, setContent] = useState<ContentItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -62,11 +143,11 @@ export default function BrowsePage() {
             setContent(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Error fetching content:', err);
-            setError('Impossible de charger le contenu pour le moment.');
+            setError(copy.loadError);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [copy.loadError]);
 
     useEffect(() => {
         fetchContent();
@@ -102,21 +183,18 @@ export default function BrowsePage() {
             <div className="max-w-6xl mx-auto px-6 py-12 space-y-10">
                 <div className="space-y-4">
                     <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
-                        Feed premium
+                        {copy.eyebrow}
                     </p>
                     <h1 className="text-4xl md:text-5xl font-semibold text-[#f4ede3]">
-                        Decouvre les collections du moment.
+                        {copy.title}
                     </h1>
-                    <p className="text-lg text-[#b7ad9c] max-w-2xl">
-                        Selection sobre, contenus verifies et acces direct aux createurs
-                        les plus demandes.
-                    </p>
+                    <p className="text-lg text-[#b7ad9c] max-w-2xl">{copy.subtitle}</p>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
                     <div className="glass rounded-3xl p-8 space-y-5">
                         <div className="flex flex-wrap items-center gap-3">
-                            {filters.map((filter) => (
+                            {filters[locale].map((filter) => (
                                 <button
                                     key={filter.label}
                                     className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-[#d6cbb8] hover:border-[#c7a46a] hover:text-[#f0d8ac] transition"
@@ -130,27 +208,25 @@ export default function BrowsePage() {
                         <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
                             <div>
                                 <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
-                                    Acces premium
+                                    {copy.premiumAccess}
                                 </p>
                                 <p className="text-lg text-[#f4ede3] font-semibold">
-                                    1 photo ou 10s de video gratuits par createur.
+                                    {copy.premiumLine}
                                 </p>
-                                <p className="text-sm text-[#b7ad9c]">
-                                    Pass 5.99 EUR (30 jours) ou abonnement 11.99 EUR.
-                                </p>
+                                <p className="text-sm text-[#b7ad9c]">{copy.premiumPrice}</p>
                             </div>
                             <div className="flex gap-3">
                                 <Link
                                     href="/auth/register"
                                     className="rounded-full border border-white/15 px-5 py-2 text-sm font-semibold text-[#d6cbb8]"
                                 >
-                                    Creer un compte
+                                    {copy.createAccount}
                                 </Link>
                                 <Link
                                     href="/auth/login"
                                     className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-sm font-semibold"
                                 >
-                                    Se connecter
+                                    {copy.login}
                                 </Link>
                             </div>
                         </div>
@@ -158,19 +234,16 @@ export default function BrowsePage() {
 
                     <div className="rounded-3xl border border-white/10 bg-white/5 p-8 space-y-4">
                         <div className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
-                            Mode collection
+                            {copy.collectionMode}
                         </div>
                         <div className="text-2xl font-semibold text-[#f4ede3]">
-                            Une interface sobre, un contenu exigeant.
+                            {copy.collectionTitle}
                         </div>
-                        <p className="text-sm text-[#b7ad9c]">
-                            Chaque creator est verifie. Les previews restent delicats,
-                            les collections completes sont reservees aux membres.
-                        </p>
+                        <p className="text-sm text-[#b7ad9c]">{copy.collectionBody}</p>
                         <div className="flex gap-2 text-xs text-[#f0d8ac]">
-                            <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">Confidentialite</span>
-                            <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">Moderation</span>
-                            <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">Paiements securises</span>
+                            <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">{copy.privacy}</span>
+                            <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">{copy.moderation}</span>
+                            <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-3 py-1">{copy.securePayments}</span>
                         </div>
                     </div>
                 </div>
@@ -182,14 +255,14 @@ export default function BrowsePage() {
                             onClick={fetchContent}
                             className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac]"
                         >
-                            Reessayer
+                            {copy.retry}
                         </button>
                     </div>
                 )}
 
                 {content.length === 0 ? (
                     <div className="rounded-3xl border border-dashed border-white/15 bg-white/5 p-10 text-center text-[#b7ad9c]">
-                        Aucun contenu disponible pour le moment.
+                        {copy.empty}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -224,13 +297,13 @@ export default function BrowsePage() {
                                                 />
                                             )
                                         ) : (
-                                            <div className="text-sm text-[#b7ad9c]">Preview</div>
+                                            <div className="text-sm text-[#b7ad9c]">{copy.preview}</div>
                                         )}
                                         {isVideo && <WatermarkOverlay />}
                                         {isLocked && (
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                                 <span className="rounded-full bg-[#15131b] px-4 py-2 text-xs font-semibold text-[#f0d8ac] border border-white/10">
-                                                    Floute
+                                                    {copy.blurred}
                                                 </span>
                                             </div>
                                         )}
@@ -257,7 +330,7 @@ export default function BrowsePage() {
                                         </div>
                                         {item.isPreview && (
                                             <span className="inline-flex rounded-full bg-[#1b1510] px-3 py-1 text-xs text-[#f0d8ac] border border-[#3a2c1a]">
-                                                Preview gratuite
+                                                {copy.freePreview}
                                             </span>
                                         )}
                                         <h3 className="text-lg font-semibold text-[#f4ede3]">
@@ -267,14 +340,14 @@ export default function BrowsePage() {
                                             {item.description}
                                         </p>
                                         <div className="flex items-center justify-between text-xs text-[#b7ad9c]">
-                                            <span>{item.stats.views} vues</span>
-                                            <span>{item.stats.likes} likes</span>
+                                            <span>{item.stats.views} {copy.views}</span>
+                                            <span>{item.stats.likes} {copy.likes}</span>
                                         </div>
                                         <Link
                                             href={`/content/${item._id}`}
                                             className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] py-2 text-sm font-semibold"
                                         >
-                                            {item.unlocked ? 'Voir le contenu' : 'Debloquer'}
+                                            {item.unlocked ? copy.viewContent : copy.unlock}
                                         </Link>
                                     </div>
                                 </div>
@@ -283,9 +356,9 @@ export default function BrowsePage() {
                     </div>
                 )}
                 <CTASection
-                    title="Accede aux collections completes."
-                    subtitle="Le pass ou l'abonnement debloquent les series premium et le chat."
-                    primaryLabel="Voir les offres"
+                    title={copy.ctaTitle}
+                    subtitle={copy.ctaSubtitle}
+                    primaryLabel={copy.ctaPrimary}
                     primaryHref="/offers"
                 />
             </div>
@@ -293,4 +366,3 @@ export default function BrowsePage() {
         </div>
     );
 }
-

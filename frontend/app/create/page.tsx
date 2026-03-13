@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -6,20 +6,104 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { apiUrl } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
+import { useLocale } from '../components/LocaleProvider';
 
 type UploadResult = {
     url: string;
     type: 'image' | 'video';
 };
 
-const guidelines = [
-    'Format recommande: JPG, PNG ou MP4.',
-    '1 photo ou 10s de video gratuits par createur, le reste est floute.',
-    'Serie courte, propre, et lumiere soignee.',
-    'Age requis: 18+ et verification obligatoire.',
-];
-
 export default function CreatePage() {
+    const { locale } = useLocale();
+    const copy =
+        locale === 'fr'
+            ? {
+                  guidelines: [
+                      'Format recommande: JPG, PNG ou MP4.',
+                      '1 photo ou 10s de video gratuits par createur, le reste est floute.',
+                      'Serie courte, propre, et lumiere soignee.',
+                      'Age requis: 18+ et verification obligatoire.',
+                  ],
+                  uploadError: 'Upload error.',
+                  loginFirst: 'Connecte-toi avant de publier.',
+                  titleRequired: 'Le titre est requis.',
+                  priceNumber: 'Le prix doit etre un nombre.',
+                  publishError: 'Erreur lors de la publication.',
+                  success: 'Contenu publie.',
+                  genericError: 'Erreur.',
+                  eyebrow: 'Studio creator',
+                  title: 'Publie ta prochaine serie.',
+                  subtitle:
+                      'Charge tes photos ou videos, fixe un prix et partage ton univers. Les contenus sont vendus a la piece ou via abonnement.',
+                  seeProfile: 'Voir mon profil',
+                  explore: 'Explorer le feed',
+                  loginToPublish: 'Connecte-toi pour publier un contenu.',
+                  login: 'Se connecter',
+                  or: 'ou',
+                  createAccount: 'creer un compte',
+                  consumerWarning: 'Ce compte est un profil consommateur.',
+                  createCreator: 'Cree un compte creator',
+                  createCreatorSuffix: 'pour publier du contenu.',
+                  titleLabel: 'Titre',
+                  titlePlaceholder: 'Ex: Studio rose - Serie 01',
+                  descriptionLabel: 'Description',
+                  descriptionPlaceholder:
+                      "Ajoute quelques mots sur l'ambiance, la lumiere, le set...",
+                  priceLabel: 'Prix (EUR)',
+                  fileLabel: 'Fichier',
+                  publishing: 'Publication...',
+                  publish: 'Publier',
+                  commission:
+                      'Commission plateforme: 20%. Paiement au creator sous 48h apres validation.',
+                  publishingTips: 'Conseils de publication',
+                  proTip:
+                      "Pro tip: propose un prix d'appel pour attirer de nouveaux fans.",
+                  requestInfo:
+                      'Demandes specifiques: reponse en 48h, contenu uniquement autour des pieds.',
+              }
+            : {
+                  guidelines: [
+                      'Recommended format: JPG, PNG, or MP4.',
+                      '1 free photo or 10 seconds of video per creator, the rest stays blurred.',
+                      'Keep it short, clean, and well lit.',
+                      'Required age: 18+ with mandatory verification.',
+                  ],
+                  uploadError: 'Upload error.',
+                  loginFirst: 'Log in before publishing.',
+                  titleRequired: 'Title is required.',
+                  priceNumber: 'Price must be numeric.',
+                  publishError: 'Publishing failed.',
+                  success: 'Content published.',
+                  genericError: 'Error.',
+                  eyebrow: 'Creator studio',
+                  title: 'Publish your next series.',
+                  subtitle:
+                      'Upload your photos or videos, set a price, and share your world. Content is sold individually or through subscription.',
+                  seeProfile: 'View my profile',
+                  explore: 'Explore the feed',
+                  loginToPublish: 'Log in to publish content.',
+                  login: 'Log in',
+                  or: 'or',
+                  createAccount: 'create an account',
+                  consumerWarning: 'This account is a consumer profile.',
+                  createCreator: 'Create a creator account',
+                  createCreatorSuffix: 'to publish content.',
+                  titleLabel: 'Title',
+                  titlePlaceholder: 'Ex: Pink studio - Series 01',
+                  descriptionLabel: 'Description',
+                  descriptionPlaceholder: 'Add a few words about mood, light, and setup...',
+                  priceLabel: 'Price (EUR)',
+                  fileLabel: 'File',
+                  publishing: 'Publishing...',
+                  publish: 'Publish',
+                  commission:
+                      'Platform fee: 20%. Creator payout within 48h after validation.',
+                  publishingTips: 'Publishing tips',
+                  proTip:
+                      'Pro tip: use an entry price to attract new fans.',
+                  requestInfo:
+                      'Specific requests: reply within 48h, feet-only content.',
+              };
     const [token, setToken] = useState('');
     const [isCreator, setIsCreator] = useState(false);
     const [title, setTitle] = useState('');
@@ -63,7 +147,7 @@ export default function CreatePage() {
 
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.message || 'Upload error.');
+            throw new Error(data.message || copy.uploadError);
         }
 
         return data as UploadResult;
@@ -76,15 +160,15 @@ export default function CreatePage() {
 
         try {
             if (!token) {
-                throw new Error('Connecte-toi avant de publier.');
+                throw new Error(copy.loginFirst);
             }
 
             if (!title.trim()) {
-                throw new Error('Le titre est requis.');
+                throw new Error(copy.titleRequired);
             }
 
             if (price.trim() && !Number.isFinite(Number(price))) {
-                throw new Error('Le prix doit etre un nombre.');
+                throw new Error(copy.priceNumber);
             }
 
             const uploaded = await uploadFile();
@@ -114,16 +198,16 @@ export default function CreatePage() {
 
             const data = await response.json();
             if (!response.ok) {
-                throw new Error(data.message || 'Erreur lors de la publication.');
+                throw new Error(data.message || copy.publishError);
             }
 
-            setFormSuccess('Contenu publie.');
+            setFormSuccess(copy.success);
             setTitle('');
             setDescription('');
             setPrice('');
             setFile(null);
         } catch (error) {
-            setFormError(error instanceof Error ? error.message : 'Erreur.');
+            setFormError(error instanceof Error ? error.message : copy.genericError);
         } finally {
             setSubmitting(false);
         }
@@ -137,52 +221,49 @@ export default function CreatePage() {
                 <div className="glass rounded-3xl p-8 flex flex-col lg:flex-row lg:items-center gap-8">
                     <div className="space-y-3">
                         <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
-                            Studio creator
+                            {copy.eyebrow}
                         </p>
                         <h1 className="text-4xl font-semibold text-[#f4ede3]">
-                            Publie ta prochaine serie.
+                            {copy.title}
                         </h1>
-                        <p className="text-[#b7ad9c] max-w-xl">
-                            Charge tes photos ou videos, fixe un prix et partage ton univers.
-                            Les contenus sont vendus a la piece ou via abonnement.
-                        </p>
+                        <p className="text-[#b7ad9c] max-w-xl">{copy.subtitle}</p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
                         <Link
                             href="/profile"
                             className="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-[#d6cbb8]"
                         >
-                            Voir mon profil
+                            {copy.seeProfile}
                         </Link>
                         <Link
                             href="/browse"
                             className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-6 py-3 text-sm font-semibold"
                         >
-                            Explorer le feed
+                            {copy.explore}
                         </Link>
                     </div>
                 </div>
 
                 {!token && (
                     <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 text-[#f0d8ac]">
-                        Connecte-toi pour publier un contenu.{' '}
+                        {copy.loginToPublish}{' '}
                         <Link href="/auth/login" className="font-semibold underline">
-                            Se connecter
+                            {copy.login}
                         </Link>{' '}
-                        ou{' '}
+                        {copy.or}{' '}
                         <Link href="/auth/register" className="font-semibold underline">
-                            creer un compte
+                            {copy.createAccount}
                         </Link>
                         .
                     </div>
                 )}
                 {token && !isCreator && (
                     <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 text-[#f0d8ac]">
-                        Ce compte est un profil consommateur.{' '}
+                        {copy.consumerWarning}{' '}
                         <Link href="/auth/register/creator" className="font-semibold underline">
-                            Cree un compte creator
+                            {copy.createCreator}
                         </Link>{' '}
-                        pour publier du contenu.
+                        {copy.createCreatorSuffix}
                     </div>
                 )}
 
@@ -200,21 +281,21 @@ export default function CreatePage() {
                         )}
 
                         <label className="block space-y-2">
-                            <span className="text-sm text-[#b7ad9c]">Titre</span>
+                            <span className="text-sm text-[#b7ad9c]">{copy.titleLabel}</span>
                             <input
                                 value={title}
                                 onChange={(event) => setTitle(event.target.value)}
-                                placeholder="Ex: Studio rose - Serie 01"
+                                placeholder={copy.titlePlaceholder}
                                 className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
                             />
                         </label>
 
                         <label className="block space-y-2">
-                            <span className="text-sm text-[#b7ad9c]">Description</span>
+                            <span className="text-sm text-[#b7ad9c]">{copy.descriptionLabel}</span>
                             <textarea
                                 value={description}
                                 onChange={(event) => setDescription(event.target.value)}
-                                placeholder="Ajoute quelques mots sur l'ambiance, la lumiere, le set..."
+                                placeholder={copy.descriptionPlaceholder}
                                 className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
                                 rows={5}
                             />
@@ -222,7 +303,7 @@ export default function CreatePage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <label className="block space-y-2">
-                                <span className="text-sm text-[#b7ad9c]">Prix (EUR)</span>
+                                <span className="text-sm text-[#b7ad9c]">{copy.priceLabel}</span>
                                 <input
                                     value={price}
                                     onChange={(event) => setPrice(event.target.value)}
@@ -234,7 +315,7 @@ export default function CreatePage() {
                                 />
                             </label>
                             <label className="block space-y-2">
-                                <span className="text-sm text-[#b7ad9c]">Fichier</span>
+                                <span className="text-sm text-[#b7ad9c]">{copy.fileLabel}</span>
                                 <input
                                     type="file"
                                     accept="image/*,video/*"
@@ -249,21 +330,19 @@ export default function CreatePage() {
                             disabled={submitting || !token || !isCreator}
                             className="w-full rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] py-3 font-semibold shadow-lg disabled:opacity-60"
                         >
-                            {submitting ? 'Publication...' : 'Publier'}
+                            {submitting ? copy.publishing : copy.publish}
                         </button>
 
-                        <p className="text-xs text-[#b7ad9c]">
-                            Commission plateforme: 20%. Paiement au creator sous 48h apres validation.
-                        </p>
+                        <p className="text-xs text-[#b7ad9c]">{copy.commission}</p>
                     </div>
 
                     <div className="rounded-3xl bg-white/5 p-8 shadow-lg space-y-6 border border-white/5">
                         <div>
                             <h2 className="text-xl font-semibold text-[#f4ede3]">
-                                Conseils de publication
+                                {copy.publishingTips}
                             </h2>
                             <ul className="text-sm text-[#b7ad9c] space-y-3 mt-4">
-                                {guidelines.map((item) => (
+                                {copy.guidelines.map((item) => (
                                     <li key={item} className="flex items-start gap-2">
                                         <span className="mt-1 h-2 w-2 rounded-full bg-[#c7a46a]" />
                                         <span>{item}</span>
@@ -272,10 +351,10 @@ export default function CreatePage() {
                             </ul>
                         </div>
                         <div className="rounded-2xl bg-[#1a1510] px-4 py-4 text-sm text-[#f0d8ac] border border-[#3a2c1a]">
-                            Pro tip: propose un prix d&apos;appel pour attirer de nouveaux fans.
+                            {copy.proTip}
                         </div>
                         <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-[#b7ad9c]">
-                            Demandes specifiques: reponse en 48h, contenu uniquement autour des pieds.
+                            {copy.requestInfo}
                         </div>
                     </div>
                 </div>
