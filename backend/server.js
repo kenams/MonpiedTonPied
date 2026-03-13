@@ -14,12 +14,15 @@ const { seedDatabase } = require('./scripts/seed');
 require('dotenv').config();
 
 const app = express();
+const rawTrustProxy = process.env.TRUST_PROXY;
 const trustProxyValue =
-    process.env.TRUST_PROXY === 'true'
+    rawTrustProxy === 'true'
         ? 1
-        : process.env.TRUST_PROXY === 'false'
+        : rawTrustProxy === 'false'
           ? 0
-          : process.env.TRUST_PROXY || 0;
+          : /^\d+$/.test(rawTrustProxy || '')
+            ? Number(rawTrustProxy)
+            : rawTrustProxy || 0;
 app.set('trust proxy', trustProxyValue);
 const server = http.createServer(app);
 const io = socketIo(server, {
