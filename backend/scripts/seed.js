@@ -20,32 +20,13 @@ async function seedDatabase() {
     const legacyModelEmail = 'tessou@monpiedtonpied.local';
     const legacyModelUsername = 'Tessou';
 
-    let user = await User.findOne({ email });
-    if (!user) {
-        const passwordHash = await bcrypt.hash(password, 10);
-        user = await User.create({
-            username,
-            email,
-            passwordHash,
-            role: 'creator',
-            displayName: 'Demo Creator',
-            bio: 'Createur de demonstration',
-            avatarUrl: defaultAvatarUrl,
-            birthDate: new Date('1995-01-01'),
-            ageVerifiedAt: new Date(),
-            emailVerifiedAt: new Date(),
-        });
-        console.log('OK Demo user created:', email, `password: ${password}`);
-    } else {
-        if (!user.avatarUrl || user.avatarUrl === '/default-avatar.png') {
-            user.avatarUrl = defaultAvatarUrl;
-            await user.save();
-        }
-        if (!user.emailVerifiedAt) {
-            user.emailVerifiedAt = new Date();
-            await user.save();
-        }
-        console.log('INFO Demo user already present:', email);
+    const legacyDemoCreator = await User.findOne({
+        $or: [{ email }, { username }],
+    });
+    if (legacyDemoCreator) {
+        await Content.deleteMany({ creator: legacyDemoCreator._id });
+        await User.deleteOne({ _id: legacyDemoCreator._id });
+        console.log('OK Demo creator removed:', email);
     }
 
     let consumer = await User.findOne({
@@ -121,43 +102,6 @@ async function seedDatabase() {
         }
         await model.save();
         console.log('INFO Model user already present:', modelEmail);
-    }
-
-    const contentCount = await Content.countDocuments();
-    if (contentCount === 0) {
-        await Content.insertMany([
-            {
-                title: 'Belles chaussures rouges',
-                description: 'Contenu exclusif de qualite premium',
-                creator: user._id,
-                files: [
-                    {
-                        url: '/placeholder-image.jpg',
-                        type: 'image',
-                        thumbnail: '/placeholder-image.jpg',
-                        price: 15,
-                    },
-                ],
-                stats: { views: 150, likes: 45 },
-            },
-            {
-                title: 'Pieds sur la plage',
-                description: 'Shot naturel en bord de mer',
-                creator: user._id,
-                files: [
-                    {
-                        url: '/placeholder-image.jpg',
-                        type: 'image',
-                        thumbnail: '/placeholder-image.jpg',
-                        price: 12,
-                    },
-                ],
-                stats: { views: 89, likes: 23 },
-            },
-        ]);
-        console.log('OK Demo contents inserted.');
-    } else {
-        console.log('INFO Contents already present, seed skipped.');
     }
 
     if (model) {
