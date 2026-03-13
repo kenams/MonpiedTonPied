@@ -242,99 +242,23 @@ async function seedDatabase() {
     }
 
     const fakeCreators = [
-        {
-            slug: 'novavelvet',
-            username: 'NovaVelvet',
-            displayName: 'Nova Velvet',
-            email: 'novavelvet@monpiedtonpied.local',
-            bio: 'Modele test premium.',
-        },
-        {
-            slug: 'mirasol',
-            username: 'MiraSol',
-            displayName: 'Mira Sol',
-            email: 'mirasol@monpiedtonpied.local',
-            bio: 'Modele test soleil.',
-        },
-        {
-            slug: 'noesatin',
-            username: 'NoeSatin',
-            displayName: 'Noe Satin',
-            email: 'noesatin@monpiedtonpied.local',
-            bio: 'Modele test satin.',
-        },
-        {
-            slug: 'rheanoir',
-            username: 'RheaNoir',
-            displayName: 'Rhea Noir',
-            email: 'rheanoir@monpiedtonpied.local',
-            bio: 'Modele test noir.',
-        },
+        { username: 'NovaVelvet', email: 'novavelvet@monpiedtonpied.local' },
+        { username: 'MiraSol', email: 'mirasol@monpiedtonpied.local' },
+        { username: 'NoeSatin', email: 'noesatin@monpiedtonpied.local' },
+        { username: 'RheaNoir', email: 'rheanoir@monpiedtonpied.local' },
     ];
 
     for (const fake of fakeCreators) {
-        let fakeUser = await User.findOne({
+        const fakeUser = await User.findOne({
             $or: [{ email: fake.email }, { username: fake.username }],
         });
         if (!fakeUser) {
-            const passwordHash = await bcrypt.hash(password, 10);
-            fakeUser = await User.create({
-                username: fake.username,
-                email: fake.email,
-                passwordHash,
-                role: 'creator',
-                displayName: fake.displayName,
-                bio: fake.bio,
-                avatarUrl: `/creators/${fake.slug}.svg`,
-                birthDate: new Date('1997-01-01'),
-                ageVerifiedAt: new Date(),
-                emailVerifiedAt: new Date(),
-                verifiedCreator: true,
-            });
-            console.log('OK Fake creator created:', fake.email);
-        } else {
-            fakeUser.displayName = fake.displayName;
-            fakeUser.bio = fake.bio;
-            fakeUser.avatarUrl = `/creators/${fake.slug}.svg`;
-            if (!fakeUser.ageVerifiedAt) {
-                fakeUser.ageVerifiedAt = new Date();
-            }
-            if (!fakeUser.emailVerifiedAt) {
-                fakeUser.emailVerifiedAt = new Date();
-            }
-            await fakeUser.save();
-            console.log('INFO Fake creator already present:', fake.email);
+            continue;
         }
 
-        const photoTitle = `${fake.displayName} - Photo 01`;
-
-        await Content.deleteMany({
-            creator: fakeUser._id,
-            $or: [
-                { title: { $regex: /Video/i } },
-                { 'files.type': { $regex: /^video/i } },
-                { 'files.url': { $regex: /\/uploads\/fake\//i } },
-            ],
-        });
-
-        const existingPhoto = await Content.findOne({
-            creator: fakeUser._id,
-            title: photoTitle,
-        });
-        if (!existingPhoto) {
-            await Content.create({
-                title: photoTitle,
-                description: 'Photo test.',
-                creator: fakeUser._id,
-                files: [{ url: `/placeholders/${fake.slug}-1.svg`, type: 'image/svg+xml' }],
-            });
-        }
-
-        const now = Date.now();
-        await Content.updateOne(
-            { creator: fakeUser._id, title: photoTitle },
-            { $set: { createdAt: new Date(now), updatedAt: new Date(now) } }
-        );
+        await Content.deleteMany({ creator: fakeUser._id });
+        await User.deleteOne({ _id: fakeUser._id });
+        console.log('OK Fake creator removed:', fake.email);
     }
 }
 
