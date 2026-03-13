@@ -34,11 +34,16 @@ async function run() {
             avatarUrl: defaultAvatarUrl,
             birthDate: new Date('1995-01-01'),
             ageVerifiedAt: new Date(),
+            emailVerifiedAt: new Date(),
         });
         console.log('OK Demo user created:', email, `password: ${password}`);
     } else {
         if (!user.avatarUrl || user.avatarUrl === '/default-avatar.png') {
             user.avatarUrl = defaultAvatarUrl;
+            await user.save();
+        }
+        if (!user.emailVerifiedAt) {
+            user.emailVerifiedAt = new Date();
             await user.save();
         }
         console.log('INFO Demo user already present:', email);
@@ -59,6 +64,7 @@ async function run() {
             avatarUrl: defaultAvatarUrl,
             birthDate: new Date('1999-01-01'),
             ageVerifiedAt: new Date(),
+            emailVerifiedAt: new Date(),
         });
         console.log('OK Demo consumer created:', consumerEmail, `password: ${password}`);
     } else {
@@ -71,6 +77,9 @@ async function run() {
         }
         if (!consumer.ageVerifiedAt) {
             consumer.ageVerifiedAt = new Date();
+        }
+        if (!consumer.emailVerifiedAt) {
+            consumer.emailVerifiedAt = new Date();
         }
         await consumer.save();
         console.log('INFO Demo consumer already present:', consumerEmail);
@@ -96,6 +105,7 @@ async function run() {
             avatarUrl: '/creators/labresilienne.jpg',
             birthDate: new Date('1998-01-01'),
             ageVerifiedAt: new Date(),
+            emailVerifiedAt: new Date(),
             verifiedCreator: true,
         });
         console.log('OK Model user created:', modelEmail, `password: ${password}`);
@@ -106,6 +116,9 @@ async function run() {
         model.displayName = 'LaBresilienne';
         if (!model.ageVerifiedAt) {
             model.ageVerifiedAt = new Date();
+        }
+        if (!model.emailVerifiedAt) {
+            model.emailVerifiedAt = new Date();
         }
         await model.save();
         console.log('INFO Model user already present:', modelEmail);
@@ -276,6 +289,7 @@ async function run() {
                 avatarUrl: `/creators/${fake.slug}.svg`,
                 birthDate: new Date('1997-01-01'),
                 ageVerifiedAt: new Date(),
+                emailVerifiedAt: new Date(),
                 verifiedCreator: true,
             });
             console.log('OK Fake creator created:', fake.email);
@@ -285,6 +299,9 @@ async function run() {
             fakeUser.avatarUrl = `/creators/${fake.slug}.svg`;
             if (!fakeUser.ageVerifiedAt) {
                 fakeUser.ageVerifiedAt = new Date();
+            }
+            if (!fakeUser.emailVerifiedAt) {
+                fakeUser.emailVerifiedAt = new Date();
             }
             await fakeUser.save();
             console.log('INFO Fake creator already present:', fake.email);

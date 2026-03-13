@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema(
         username: { type: String, required: true, trim: true, unique: true },
         email: { type: String, required: true, trim: true, lowercase: true, unique: true },
         passwordHash: { type: String, required: true },
+        emailVerifiedAt: { type: Date, default: null },
+        locale: { type: String, default: 'fr' },
         displayName: { type: String, trim: true },
         bio: { type: String, default: '', trim: true },
         avatarUrl: { type: String, default: '/default-avatar.svg' },

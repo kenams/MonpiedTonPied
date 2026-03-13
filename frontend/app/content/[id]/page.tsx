@@ -73,7 +73,7 @@ export default function ContentPage({
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
-                .then((data) => setIsSubscribed(Boolean(data.subscriptionActive)))
+                .then((data) => setIsSubscribed(Boolean(data.premiumAccess)))
                 .catch(() => {});
         }
     }, [fetchContent, token]);
@@ -269,7 +269,11 @@ export default function ContentPage({
                                         className="rounded-3xl bg-white/5 shadow-lg overflow-hidden border border-white/5"
                                     >
                                         <div className="aspect-[4/3] bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center relative">
-                                            {file.type.startsWith('video') ? (
+                                            {!mediaUrl ? (
+                                                <div className="text-sm text-[#b7ad9c]">
+                                                    Preview indisponible
+                                                </div>
+                                            ) : file.type.startsWith('video') ? (
                                                 <video
                                                     src={mediaUrl}
                                                     controls={!file.isLocked}

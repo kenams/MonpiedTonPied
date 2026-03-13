@@ -19,8 +19,12 @@ type UserProfile = {
     bio?: string;
     avatarUrl?: string;
     ageVerified: boolean;
+    emailVerified?: boolean;
     accessPassActive?: boolean;
     subscriptionActive?: boolean;
+    subscriptionStatus?: string;
+    passStatus?: string;
+    premiumAccess?: boolean;
     verifiedCreator?: boolean;
     isSuspended?: boolean;
 };
@@ -146,10 +150,18 @@ export default function ProfilePage() {
         }
     };
 
-    const planLabel = user?.subscriptionActive
+    const planLabel = user?.subscriptionStatus === 'active'
         ? 'Abonnement actif'
-        : user?.accessPassActive
+        : user?.passStatus === 'active'
         ? 'Pass actif'
+        : user?.subscriptionStatus === 'pending'
+        ? 'Abonnement en attente'
+        : user?.subscriptionStatus === 'expired'
+        ? 'Abonnement expire'
+        : user?.subscriptionStatus === 'canceled'
+        ? 'Abonnement annule'
+        : user?.subscriptionStatus === 'suspended'
+        ? 'Compte suspendu'
         : 'Aucun plan actif';
 
     return (
@@ -306,18 +318,27 @@ export default function ProfilePage() {
                             </h3>
                             <div className="space-y-2 text-sm text-[#b7ad9c]">
                                 <p>Age verifie: {user.ageVerified ? 'oui' : 'non'}</p>
+                                <p>Email verifie: {user.emailVerified ? 'oui' : 'non'}</p>
                                 <p>Plan: {planLabel}</p>
                                 <p>Role: {user.role}</p>
                                 {user.role === 'creator' && (
                                     <p>Creator verifie: {user.verifiedCreator ? 'oui' : 'non'}</p>
                                 )}
                             </div>
+                            {!user.emailVerified && (
+                                <Link
+                                    href="/auth/verify"
+                                    className="inline-flex text-sm font-semibold text-[#f0d8ac]"
+                                >
+                                    Verifier mon email -&gt;
+                                </Link>
+                            )}
                             {user.isSuspended && (
                                 <p className="text-sm text-[#f0d8ac]">
                                     Profil suspendu temporairement
                                 </p>
                             )}
-                            {user.subscriptionActive && (
+                            {user.subscriptionStatus === 'active' && (
                                 <button
                                     onClick={handleManageSubscription}
                                     className="rounded-full border border-[#3a2c1a] px-5 py-2 text-sm font-semibold text-[#f0d8ac] mt-2"

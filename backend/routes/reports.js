@@ -3,6 +3,7 @@ const auth = require('../middleware/auth');
 const User = require('../models/User');
 const Report = require('../models/Report');
 const { refreshCreatorStatus } = require('../utils/moderation');
+const { normalizeRole } = require('../utils/accessControl');
 
 const router = express.Router();
 
@@ -47,12 +48,12 @@ router.post('/', auth, async (req, res) => {
 
 router.get('/', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
 
-        const role = user.role === 'user' ? 'consumer' : user.role;
+        const role = normalizeRole(user.role);
         const filter = role === 'admin' ? {} : { reporter: user._id };
 
         const reports = await Report.find(filter).sort({ createdAt: -1 }).limit(200);
@@ -76,11 +77,11 @@ router.get('/', auth, async (req, res) => {
 router.post('/:id/status', auth, async (req, res) => {
     try {
         const { status } = req.body;
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
-        const role = user.role === 'user' ? 'consumer' : user.role;
+        const role = normalizeRole(user.role);
         if (role !== 'admin') {
             return res.status(403).json({ message: 'Accès refusé.' });
         }

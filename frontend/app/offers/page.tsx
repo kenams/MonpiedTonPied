@@ -10,6 +10,7 @@ import { getAuthToken } from '../lib/auth';
 export default function OffersPage() {
     const token = getAuthToken();
     const [message, setMessage] = useState<string | null>(null);
+    const paywallMode = process.env.NEXT_PUBLIC_PAYWALL_MODE || 'live';
 
     const redirectToCheckout = async (path: string) => {
         setMessage(null);
@@ -54,6 +55,11 @@ export default function OffersPage() {
                 {message && (
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
                         {message}
+                    </div>
+                )}
+                {paywallMode === 'staging' && (
+                    <div className="rounded-2xl border border-[#3a2c1a] bg-[#1b1510] px-4 py-3 text-xs text-[#f0d8ac]">
+                        Mode staging actif: paiements simules.
                     </div>
                 )}
 

@@ -9,6 +9,7 @@ import { apiUrl } from '../lib/api';
 export default function Navigation() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [token, setToken] = useState(() => getAuthToken());
+    const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
         if (!token) return;
@@ -34,9 +35,35 @@ export default function Navigation() {
         };
     }, [token]);
 
+    useEffect(() => {
+        if (!token) return;
+        let cancelled = false;
+        const loadNotifications = async () => {
+            try {
+                const res = await fetch(apiUrl('/api/notifications'), {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                if (!cancelled && Array.isArray(data)) {
+                    const unread = data.filter((item) => !item.readAt).length;
+                    setUnreadCount(unread);
+                }
+            } catch {
+                // ignore
+            }
+        };
+        loadNotifications();
+        const interval = setInterval(loadNotifications, 30000);
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [token]);
+
     const handleLogout = () => {
         clearAuthToken();
         setToken('');
+        setUnreadCount(0);
         setIsMenuOpen(false);
     };
 
@@ -76,6 +103,12 @@ export default function Navigation() {
                             Offres
                         </Link>
                         <Link
+                            href="/premium"
+                            className="hover:text-[#f0d8ac] transition-colors"
+                        >
+                            Premium
+                        </Link>
+                        <Link
                             href="/create"
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
@@ -86,6 +119,19 @@ export default function Navigation() {
                             className="hover:text-[#f0d8ac] transition-colors"
                         >
                             Profil
+                        </Link>
+                        <Link
+                            href="/notifications"
+                            className="hover:text-[#f0d8ac] transition-colors"
+                        >
+                            <span className="inline-flex items-center gap-2">
+                                Notifications
+                                {unreadCount > 0 && (
+                                    <span className="rounded-full bg-[#c7a46a] text-[#0b0a0f] text-[10px] px-2 py-0.5">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </span>
                         </Link>
                         {token ? (
                             <button
@@ -147,6 +193,13 @@ export default function Navigation() {
                             Offres
                         </Link>
                         <Link
+                            href="/premium"
+                            className="block"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                            Premium
+                        </Link>
+                        <Link
                             href="/create"
                             className="block"
                             onClick={() => setIsMenuOpen(false)}
@@ -159,6 +212,20 @@ export default function Navigation() {
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Profil
+                        </Link>
+                        <Link
+                            href="/notifications"
+                            className="block"
+                            onClick={() => setIsMenuOpen(false)}
+                        >
+                            <span className="inline-flex items-center gap-2">
+                                Notifications
+                                {unreadCount > 0 && (
+                                    <span className="rounded-full bg-[#c7a46a] text-[#0b0a0f] text-[10px] px-2 py-0.5">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </span>
                         </Link>
                         {token ? (
                             <button

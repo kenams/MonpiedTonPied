@@ -5,29 +5,11 @@ const Purchase = require('../models/Purchase');
 const auth = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
 const { signToken } = require('../utils/mediaTokens');
+const { hasPremiumAccess, normalizeRole } = require('../utils/accessControl');
 
 const router = express.Router();
 const PREVIEW_LIMIT = Number(process.env.PREVIEW_LIMIT || 1);
 const MEDIA_TOKEN_TTL_MS = Number(process.env.MEDIA_TOKEN_TTL_MS || 10 * 60 * 1000);
-
-const isActive = (expiresAt) => {
-    if (!expiresAt) return true;
-    return new Date(expiresAt).getTime() > Date.now();
-};
-
-const getRole = (user) => {
-    if (!user) return null;
-    return user.role === 'user' ? 'consumer' : user.role;
-};
-
-const hasGlobalAccess = (user) => {
-    if (!user) return false;
-    const role = getRole(user);
-    if (role === 'creator' || role === 'admin') return true;
-    if (user.subscriptionActive && isActive(user.subscriptionExpiresAt)) return true;
-    if (user.accessPassActive && isActive(user.accessPassExpiresAt)) return true;
-    return false;
-};
 
 const hasPurchase = async (user, contentId) => {
     if (!user || !contentId) return false;
@@ -60,8 +42,8 @@ const signMediaUrl = (contentId, index) => {
 
 router.get('/', optionalAuth, async (req, res) => {
     try {
-        const currentUser = req.user ? await User.findById(req.user.id) : null;
-        const canAccessAll = hasGlobalAccess(currentUser);
+        const currentUser = req.currentUser || (req.user ? await User.findById(req.user.id) : null);
+        const canAccessAll = hasPremiumAccess(currentUser);
 
         const items = await Content.find()
             .sort({ createdAt: -1 })
@@ -121,7 +103,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
 router.get('/:id', optionalAuth, async (req, res) => {
     try {
-        const currentUser = req.user ? await User.findById(req.user.id) : null;
+        const currentUser = req.currentUser || (req.user ? await User.findById(req.user.id) : null);
         const item = await Content.findById(req.params.id).populate(
             'creator',
             'username displayName avatarUrl role'
@@ -134,7 +116,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
         const creatorId = item.creator?._id?.toString();
         const isOwner =
             currentUser && creatorId === currentUser._id.toString();
-        const canAccessAll = hasGlobalAccess(currentUser);
+        const canAccessAll = hasPremiumAccess(currentUser);
         const purchased = await hasPurchase(currentUser, item._id);
 
         const previewItems = await Content.find({ creator: item.creator?._id })
@@ -198,7 +180,7 @@ router.post('/', auth, async (req, res) => {
             creator: user._id,
         });
 
-        const role = user.role === 'user' ? 'consumer' : user.role;
+        const role = normalizeRole(user.role);
         if (role !== 'creator' && role !== 'admin') {
             return res.status(403).json({ message: 'Compte créateur requis.' });
         }

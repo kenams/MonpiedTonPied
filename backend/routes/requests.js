@@ -2,6 +2,7 @@ const express = require('express');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
 const CustomRequest = require('../models/CustomRequest');
+const { normalizeRole } = require('../utils/accessControl');
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '');
 
@@ -57,12 +58,12 @@ router.post('/', auth, async (req, res) => {
 
 router.get('/', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
 
-        const role = user.role === 'user' ? 'consumer' : user.role;
+        const role = normalizeRole(user.role);
         const filter =
             role === 'creator'
                 ? { creator: user._id, paid: true }
@@ -114,7 +115,7 @@ router.get('/', auth, async (req, res) => {
 
 router.post('/:id/accept', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
@@ -157,7 +158,7 @@ router.post('/:id/accept', auth, async (req, res) => {
 
 router.post('/:id/decline', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
@@ -196,7 +197,7 @@ router.post('/:id/decline', auth, async (req, res) => {
 
 router.post('/:id/deliver', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }

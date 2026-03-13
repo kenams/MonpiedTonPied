@@ -95,6 +95,12 @@ export default function LoginPage() {
                                 Creer un compte
                             </Link>
                         </p>
+                        <Link
+                            href="/auth/reset"
+                            className="text-xs uppercase tracking-[0.2em] text-[#d8c7a8]"
+                        >
+                            Mot de passe oublie
+                        </Link>
                     </div>
 
                     {error && (

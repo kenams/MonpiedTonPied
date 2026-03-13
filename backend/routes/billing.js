@@ -1,8 +1,10 @@
 const express = require('express');
 const auth = require('../middleware/auth');
+const requireAdmin = require('../middleware/requireAdmin');
 const User = require('../models/User');
 const Purchase = require('../models/Purchase');
 const Content = require('../models/Content');
+const { buildAccessContext } = require('../utils/accessControl');
 
 const router = express.Router();
 
@@ -20,11 +22,15 @@ router.get('/status', auth, async (req, res) => {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
 
+        const access = buildAccessContext(user);
         return res.json({
             accessPassActive: user.accessPassActive,
             accessPassExpiresAt: user.accessPassExpiresAt,
             subscriptionActive: user.subscriptionActive,
             subscriptionExpiresAt: user.subscriptionExpiresAt,
+            subscriptionStatus: access.subscriptionStatus,
+            passStatus: access.passStatus,
+            premiumAccess: access.premiumAccess,
             passPrice: PASS_PRICE,
             subscriptionPrice: SUBSCRIPTION_PRICE,
         });
@@ -34,7 +40,7 @@ router.get('/status', auth, async (req, res) => {
     }
 });
 
-router.post('/pass', auth, async (req, res) => {
+router.post('/pass', auth, requireAdmin, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) {
@@ -58,7 +64,7 @@ router.post('/pass', auth, async (req, res) => {
     }
 });
 
-router.post('/subscribe', auth, async (req, res) => {
+router.post('/subscribe', auth, requireAdmin, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) {
@@ -82,7 +88,7 @@ router.post('/subscribe', auth, async (req, res) => {
     }
 });
 
-router.post('/purchase', auth, async (req, res) => {
+router.post('/purchase', auth, requireAdmin, async (req, res) => {
     try {
         const { contentId } = req.body;
         if (!contentId) {

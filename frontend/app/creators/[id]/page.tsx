@@ -1,7 +1,7 @@
 ﻿'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
@@ -65,7 +65,7 @@ export default function CreatorProfilePage({
     const [reportOpen, setReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [reportDetails, setReportDetails] = useState('');
-    const [autoChatTriggered, setAutoChatTriggered] = useState(false);
+    const autoChatTriggeredRef = useRef(false);
 
     useEffect(() => {
         fetch(apiUrl(`/api/creators/${id}`), {
@@ -208,45 +208,62 @@ export default function CreatorProfilePage({
     };
 
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-        if (!token || autoChatTriggered) return;
-        const paramsSearch = new URLSearchParams(window.location.search);
-        const success = paramsSearch.get('success');
-        const canceled = paramsSearch.get('canceled');
-        if (success === 'subscription') {
-            setAutoChatTriggered(true);
-            setMessage('Abonnement confirme. Ouverture du chat...');
-            fetch(apiUrl('/api/users/me'), {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-                .then((res) => res.json())
-                .then((data) => {
+        const syncCheckoutState = async () => {
+            if (typeof window === 'undefined') return;
+            if (!token || autoChatTriggeredRef.current) return;
+
+            const paramsSearch = new URLSearchParams(window.location.search);
+            const success = paramsSearch.get('success');
+            const canceled = paramsSearch.get('canceled');
+
+            if (success === 'subscription') {
+                autoChatTriggeredRef.current = true;
+                setMessage('Abonnement confirme. Ouverture du chat...');
+                try {
+                    const response = await fetch(apiUrl('/api/users/me'), {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    const data = await response.json();
                     setViewer(data);
                     if (data?.subscriptionActive) {
-                        startChat();
+                        await startChat();
                     } else {
                         setMessage(
                             'Abonnement en cours de confirmation. Reessaie dans quelques secondes.'
                         );
                     }
-                })
-                .catch(() => {
+                } catch {
                     setMessage('Impossible de verifier l\'abonnement.');
-                });
-        } else if (success === 'pass') {
-            setMessage('Pass actif. Acces complet aux galeries.');
-            fetch(apiUrl('/api/users/me'), {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-                .then((res) => res.json())
-                .then((data) => setViewer(data))
-                .catch(() => {});
-        } else if (canceled === 'subscription') {
-            setMessage('Paiement annule. Abonnement non active.');
-        } else if (canceled === 'pass') {
-            setMessage('Paiement annule. Pass non active.');
-        }
-    }, [token, autoChatTriggered, startChat]);
+                }
+                return;
+            }
+
+            if (success === 'pass') {
+                setMessage('Pass actif. Acces complet aux galeries.');
+                try {
+                    const response = await fetch(apiUrl('/api/users/me'), {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    const data = await response.json();
+                    setViewer(data);
+                } catch {
+                    // ignore
+                }
+                return;
+            }
+
+            if (canceled === 'subscription') {
+                setMessage('Paiement annule. Abonnement non active.');
+                return;
+            }
+
+            if (canceled === 'pass') {
+                setMessage('Paiement annule. Pass non active.');
+            }
+        };
+
+        syncCheckoutState();
+    }, [token, startChat]);
 
     const handleReport = async () => {
         if (!token) {

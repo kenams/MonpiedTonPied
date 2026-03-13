@@ -6,6 +6,10 @@ const rateLimit = require('express-rate-limit');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const User = require('./models/User');
+const Chat = require('./models/Chat');
+const { hasSubscriptionAccess, normalizeRole } = require('./utils/accessControl');
 require('dotenv').config();
 
 const app = express();
@@ -17,6 +21,9 @@ const io = socketIo(server, {
         methods: ["GET", "POST"]
     }
 });
+app.set('io', io);
+const SOCKET_ENABLED = process.env.ENABLE_SOCKET_IO !== 'false';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
 // Middleware
 app.use(
@@ -93,6 +100,10 @@ const reportRoutes = require('./routes/reports');
 const dashboardRoutes = require('./routes/dashboard');
 const presenceRoutes = require('./routes/presence');
 const mediaRoutes = require('./routes/media');
+const adminRoutes = require('./routes/admin');
+const adminCsvRoutes = require('./routes/adminCsv');
+const notificationRoutes = require('./routes/notifications');
+const pushRoutes = require('./routes/push');
 
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/content', contentRoutes);
@@ -107,31 +118,94 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/presence', presenceRoutes);
 app.use('/api/media', mediaRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminCsvRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/push', pushRoutes);
 const allowPublicUploads = process.env.ALLOW_PUBLIC_UPLOADS === 'true';
 app.use('/uploads', (req, res, next) => {
-    if (!allowPublicUploads && /\.(mp4|webm|ogg|mov|m4v)$/i.test(req.path)) {
+    const isAvatar = req.path.startsWith('/avatars/');
+    const isPublic = req.path.startsWith('/public/');
+    if (!allowPublicUploads && !isAvatar && !isPublic) {
         return res.status(403).json({ message: 'Acces refuse.' });
     }
     return next();
 });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Socket.io pour les messages en temps réel
-io.on('connection', (socket) => {
-    console.log('Utilisateur connecté:', socket.id);
-
-    socket.on('join_room', (roomId) => {
-        socket.join(roomId);
+// Socket.io pour les messages en temps réel (optionnel et protégé)
+if (SOCKET_ENABLED) {
+    io.use(async (socket, next) => {
+        try {
+            const token =
+                socket.handshake.auth?.token ||
+                socket.handshake.query?.token ||
+                '';
+            if (!token) {
+                return next(new Error('auth_required'));
+            }
+            const payload = jwt.verify(token, JWT_SECRET);
+            const user = await User.findById(payload.id);
+            if (!user || user.isSuspended) {
+                return next(new Error('auth_invalid'));
+            }
+            socket.data.userId = user._id.toString();
+            socket.data.role = normalizeRole(user.role);
+            socket.data.canChat = hasSubscriptionAccess(user);
+            return next();
+        } catch (error) {
+            return next(new Error('auth_invalid'));
+        }
     });
 
-    socket.on('send_message', (data) => {
-        socket.to(data.roomId).emit('receive_message', data);
-    });
+    io.on('connection', (socket) => {
+        console.log('Utilisateur connecté:', socket.id);
 
-    socket.on('disconnect', () => {
-        console.log('Utilisateur déconnecté:', socket.id);
+        socket.join(`user:${socket.data.userId}`);
+
+        socket.on('join_room', async (roomId) => {
+            try {
+                const chat = await Chat.findById(roomId);
+                if (!chat) return;
+                const userId = socket.data.userId;
+                const isParticipant =
+                    chat.consumer.toString() === userId ||
+                    chat.creator.toString() === userId;
+                if (!isParticipant) return;
+                if (socket.data.role === 'consumer' && !socket.data.canChat) return;
+                socket.join(roomId);
+            } catch {
+                // ignore
+            }
+        });
+
+        socket.on('join_notifications', () => {
+            socket.join(`user:${socket.data.userId}`);
+        });
+
+        socket.on('send_message', async (data) => {
+            try {
+                const roomId = data?.roomId;
+                if (!roomId) return;
+                const chat = await Chat.findById(roomId);
+                if (!chat) return;
+                const userId = socket.data.userId;
+                const isParticipant =
+                    chat.consumer.toString() === userId ||
+                    chat.creator.toString() === userId;
+                if (!isParticipant) return;
+                if (socket.data.role === 'consumer' && !socket.data.canChat) return;
+                socket.to(roomId).emit('receive_message', data);
+            } catch {
+                // ignore
+            }
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Utilisateur déconnecté:', socket.id);
+        });
     });
-});
+}
 
 // Connexion MongoDB (version de test avec base locale)
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/monpiedtonpied')

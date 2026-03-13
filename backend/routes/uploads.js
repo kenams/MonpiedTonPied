@@ -5,12 +5,18 @@ const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const auth = require('../middleware/auth');
 const User = require('../models/User');
+const { normalizeRole } = require('../utils/accessControl');
 
 const router = express.Router();
 
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+const uploadsRoot = path.join(__dirname, '..', 'uploads');
+const contentUploadDir = path.join(uploadsRoot, 'content');
+const avatarUploadDir = path.join(uploadsRoot, 'avatars');
+if (!fs.existsSync(contentUploadDir)) {
+    fs.mkdirSync(contentUploadDir, { recursive: true });
+}
+if (!fs.existsSync(avatarUploadDir)) {
+    fs.mkdirSync(avatarUploadDir, { recursive: true });
 }
 
 const cloudinaryConfigured = Boolean(
@@ -29,7 +35,7 @@ if (cloudinaryConfigured && !process.env.CLOUDINARY_URL) {
 }
 
 const storage = multer.diskStorage({
-    destination: uploadDir,
+    destination: contentUploadDir,
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
         const safeBase = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -57,8 +63,17 @@ const upload = multer({
     limits: { fileSize: 20 * 1024 * 1024 },
 });
 
+const avatarStorage = multer.diskStorage({
+    destination: avatarUploadDir,
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const safeBase = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        cb(null, `${safeBase}${ext}`);
+    },
+});
+
 const avatarUpload = multer({
-    storage,
+    storage: avatarStorage,
     fileFilter: avatarFilter,
     limits: { fileSize: 5 * 1024 * 1024 },
 });
@@ -74,8 +89,8 @@ const uploadToCloudinary = async (filePath, mimetype) => {
 
 router.post('/', auth, async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.id);
-        const role = user?.role === 'user' ? 'consumer' : user?.role;
+        const user = req.currentUser || (await User.findById(req.user.id));
+        const role = normalizeRole(user?.role);
         if (!user || (role !== 'creator' && role !== 'admin')) {
             return res.status(403).json({ message: 'Compte createur requis.' });
         }
@@ -100,7 +115,7 @@ router.post('/', auth, async (req, res, next) => {
     } else {
         const baseUrl =
             process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
-        url = `${baseUrl}/uploads/${req.file.filename}`;
+        url = `${baseUrl}/uploads/content/${req.file.filename}`;
     }
 
     return res.status(201).json({
@@ -133,7 +148,7 @@ router.post('/avatar', auth, avatarUpload.single('file'), async (req, res) => {
     } else {
         const baseUrl =
             process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
-        url = `${baseUrl}/uploads/${req.file.filename}`;
+        url = `${baseUrl}/uploads/avatars/${req.file.filename}`;
     }
 
     user.avatarUrl = url;

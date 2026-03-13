@@ -1,6 +1,7 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
+const { buildAccessContext, normalizeRole } = require('../utils/accessControl');
 
 const router = express.Router();
 
@@ -11,17 +12,23 @@ router.get('/me', auth, async (req, res) => {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
 
+        const access = buildAccessContext(user);
         return res.json({
             id: user._id,
             username: user.username,
             email: user.email,
-            role: user.role === 'user' ? 'consumer' : user.role,
+            role: normalizeRole(user.role),
             displayName: user.displayName || user.username,
             bio: user.bio,
             avatarUrl: user.avatarUrl,
             ageVerified: Boolean(user.ageVerifiedAt),
+            emailVerified: Boolean(user.emailVerifiedAt),
+            locale: user.locale,
             accessPassActive: user.accessPassActive,
             subscriptionActive: user.subscriptionActive,
+            subscriptionStatus: access.subscriptionStatus,
+            passStatus: access.passStatus,
+            premiumAccess: access.premiumAccess,
             verifiedCreator: user.verifiedCreator,
             isSuspended: user.isSuspended,
         });
@@ -39,6 +46,7 @@ router.put('/me', auth, async (req, res) => {
         }
 
         const { displayName, bio, avatarUrl } = req.body;
+        const { locale } = req.body;
 
         if (typeof displayName === 'string') {
             user.displayName = displayName.trim();
@@ -49,20 +57,29 @@ router.put('/me', auth, async (req, res) => {
         if (typeof avatarUrl === 'string' && avatarUrl.trim()) {
             user.avatarUrl = avatarUrl.trim();
         }
+        if (typeof locale === 'string' && locale.trim()) {
+            user.locale = locale.trim().split('-')[0].toLowerCase();
+        }
 
         await user.save();
 
+        const access = buildAccessContext(user);
         return res.json({
             id: user._id,
             username: user.username,
             email: user.email,
-            role: user.role === 'user' ? 'consumer' : user.role,
+            role: normalizeRole(user.role),
             displayName: user.displayName || user.username,
             bio: user.bio,
             avatarUrl: user.avatarUrl,
             ageVerified: Boolean(user.ageVerifiedAt),
+            emailVerified: Boolean(user.emailVerifiedAt),
+            locale: user.locale,
             accessPassActive: user.accessPassActive,
             subscriptionActive: user.subscriptionActive,
+            subscriptionStatus: access.subscriptionStatus,
+            passStatus: access.passStatus,
+            premiumAccess: access.premiumAccess,
             verifiedCreator: user.verifiedCreator,
             isSuspended: user.isSuspended,
         });

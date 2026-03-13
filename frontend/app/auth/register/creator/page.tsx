@@ -18,6 +18,7 @@ export default function CreatorRegisterPage() {
     const [password, setPassword] = useState('');
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [info, setInfo] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
     const uploadAvatar = async (token: string) => {
@@ -34,6 +35,7 @@ export default function CreatorRegisterPage() {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         setError(null);
+        setInfo(null);
         setLoading(true);
 
         try {
@@ -47,6 +49,7 @@ export default function CreatorRegisterPage() {
                     birthDate,
                     bio,
                     password,
+                    locale: typeof navigator !== 'undefined' ? navigator.language : 'fr',
                 }),
             });
 
@@ -55,9 +58,19 @@ export default function CreatorRegisterPage() {
                 throw new Error(data.message || 'Inscription impossible.');
             }
 
-            setAuthToken(data.token);
-            await uploadAvatar(data.token);
-            router.push('/profile');
+            if (data.token) {
+                setAuthToken(data.token);
+                await uploadAvatar(data.token);
+                router.push('/profile');
+                return;
+            }
+            if (data.verificationRequired) {
+                setInfo(
+                    'Verification email requise. Consulte ta boite mail pour activer le compte.'
+                );
+                return;
+            }
+            router.push('/auth/login');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Inscription impossible.');
         } finally {
@@ -103,6 +116,11 @@ export default function CreatorRegisterPage() {
                     {error && (
                         <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
                             {error}
+                        </div>
+                    )}
+                    {info && (
+                        <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
+                            {info}
                         </div>
                     )}
 

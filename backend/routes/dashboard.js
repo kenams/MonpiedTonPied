@@ -9,11 +9,11 @@ const router = express.Router();
 
 router.get('/creator', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
-        const role = user.role === 'user' ? 'consumer' : user.role;
+        const role = normalizeRole(user.role);
         if (role !== 'creator' && role !== 'admin') {
             return res.status(403).json({ message: 'Accès refusé.' });
         }
@@ -67,3 +67,4 @@ router.get('/creator', auth, async (req, res) => {
 });
 
 module.exports = router;
+const { normalizeRole } = require('../utils/accessControl');

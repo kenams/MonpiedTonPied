@@ -1,21 +1,17 @@
 const express = require('express');
 const auth = require('../middleware/auth');
+const requireSubscription = require('../middleware/requireSubscription');
+const rateLimit = require('express-rate-limit');
+const { normalizeRole, hasSubscriptionAccess } = require('../utils/accessControl');
 const User = require('../models/User');
 const Chat = require('../models/Chat');
 const Message = require('../models/Message');
 
 const router = express.Router();
 
-const isActive = (expiresAt) => {
-    if (!expiresAt) return true;
-    return new Date(expiresAt).getTime() > Date.now();
-};
-
 const canChat = (user) => {
     if (!user) return false;
-    const role = user.role === 'user' ? 'consumer' : user.role;
-    if (role === 'creator' || role === 'admin') return true;
-    return user.subscriptionActive && isActive(user.subscriptionExpiresAt);
+    return hasSubscriptionAccess(user);
 };
 
 const containsBlockedText = (text) => {
@@ -61,11 +57,22 @@ const containsContactInfo = (text) => {
     return keywords.some((word) => lower.includes(word));
 };
 
-router.get('/', auth, async (req, res) => {
+const chatLimiter = rateLimit({
+    windowMs: Number(process.env.RATE_LIMIT_CHAT_WINDOW_MS || 60 * 1000),
+    max: Number(process.env.RATE_LIMIT_CHAT_MAX || 30),
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+router.get('/', auth, requireSubscription, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
+        }
+        const role = normalizeRole(user.role);
+        if (role === 'consumer' && !canChat(user)) {
+            return res.status(403).json({ message: 'Abonnement requis pour le chat.' });
         }
 
         const chats = await Chat.find({
@@ -97,16 +104,11 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-router.post('/:creatorId', auth, async (req, res) => {
+router.post('/:creatorId', auth, requireSubscription, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
-        }
-
-        const role = user.role === 'user' ? 'consumer' : user.role;
-        if (role === 'consumer' && !canChat(user)) {
-            return res.status(403).json({ message: 'Abonnement requis pour le chat.' });
         }
 
         const creator = await User.findById(req.params.creatorId);
@@ -127,9 +129,9 @@ router.post('/:creatorId', auth, async (req, res) => {
     }
 });
 
-router.get('/:chatId/messages', auth, async (req, res) => {
+router.get('/:chatId/messages', auth, requireSubscription, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
@@ -144,11 +146,6 @@ router.get('/:chatId/messages', auth, async (req, res) => {
             chat.creator.toString() === user._id.toString();
         if (!isParticipant) {
             return res.status(403).json({ message: 'Accès refusé.' });
-        }
-
-        const role = user.role === 'user' ? 'consumer' : user.role;
-        if (role === 'consumer' && !canChat(user)) {
-            return res.status(403).json({ message: 'Abonnement requis pour le chat.' });
         }
 
         const messages = await Message.find({ chat: chat._id })
@@ -169,9 +166,9 @@ router.get('/:chatId/messages', auth, async (req, res) => {
     }
 });
 
-router.post('/:chatId/messages', auth, async (req, res) => {
+router.post('/:chatId/messages', auth, requireSubscription, chatLimiter, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        const user = req.currentUser || (await User.findById(req.user.id));
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
@@ -188,14 +185,12 @@ router.post('/:chatId/messages', auth, async (req, res) => {
             return res.status(403).json({ message: 'Accès refusé.' });
         }
 
-        const role = user.role === 'user' ? 'consumer' : user.role;
-        if (role === 'consumer' && !canChat(user)) {
-            return res.status(403).json({ message: 'Abonnement requis pour le chat.' });
-        }
-
         const { text } = req.body;
         if (!text || !text.trim()) {
             return res.status(400).json({ message: 'Message vide.' });
+        }
+        if (text.length > 2000) {
+            return res.status(400).json({ message: 'Message trop long.' });
         }
         if (containsBlockedText(text)) {
             return res.status(400).json({ message: 'Message non autorisé.' });

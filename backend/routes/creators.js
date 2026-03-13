@@ -5,24 +5,16 @@ const Purchase = require('../models/Purchase');
 const optionalAuth = require('../middleware/optionalAuth');
 const { isOnline } = require('../utils/presenceStore');
 const { signToken } = require('../utils/mediaTokens');
+const { hasPremiumAccess } = require('../utils/accessControl');
 
 const router = express.Router();
 const PREVIEW_LIMIT = Number(process.env.PREVIEW_LIMIT || 1);
 const ONLINE_WINDOW_MS = Number(process.env.ONLINE_WINDOW_MS || 5 * 60 * 1000);
 const MEDIA_TOKEN_TTL_MS = Number(process.env.MEDIA_TOKEN_TTL_MS || 10 * 60 * 1000);
 
-const isActive = (expiresAt) => {
-    if (!expiresAt) return true;
-    return new Date(expiresAt).getTime() > Date.now();
-};
-
 const canAccessAll = (user) => {
     if (!user) return false;
-    const role = user.role === 'user' ? 'consumer' : user.role;
-    if (role === 'creator' || role === 'admin') return true;
-    if (user.subscriptionActive && isActive(user.subscriptionExpiresAt)) return true;
-    if (user.accessPassActive && isActive(user.accessPassExpiresAt)) return true;
-    return false;
+    return hasPremiumAccess(user);
 };
 
 const getUploadsPath = (value) => {
@@ -82,7 +74,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
             return res.status(403).json({ message: 'Profil temporairement suspendu.' });
         }
 
-        const viewer = req.user ? await User.findById(req.user.id) : null;
+        const viewer = req.currentUser || (req.user ? await User.findById(req.user.id) : null);
         const canAccess = canAccessAll(viewer);
 
         const contents = await Content.find({ creator: creator._id })

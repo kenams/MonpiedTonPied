@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { use, useEffect, useState } from 'react';
+import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
@@ -19,6 +20,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     const [messages, setMessages] = useState<Message[]>([]);
     const [text, setText] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [premiumAccess, setPremiumAccess] = useState<boolean | null>(null);
 
     const fetchMessages = async () => {
         if (!token) return;
@@ -35,6 +37,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
     useEffect(() => {
         fetchMessages();
+        if (token) {
+            fetch(apiUrl('/api/users/me'), {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+                .then((res) => res.json())
+                .then((data) => setPremiumAccess(Boolean(data.premiumAccess)))
+                .catch(() => setPremiumAccess(false));
+        } else {
+            setPremiumAccess(false);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
@@ -79,6 +91,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 )}
 
                 <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-4">
+                    {!token && (
+                        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
+                            Connecte-toi pour acceder au chat.
+                        </div>
+                    )}
+                    {token && premiumAccess === false && (
+                        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
+                            Abonnement requis pour le chat.
+                        </div>
+                    )}
                     <div className="space-y-3 max-h-[420px] overflow-auto">
                         {messages.length === 0 && (
                             <p className="text-sm text-[#b7ad9c]">
@@ -95,20 +117,40 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         ))}
                     </div>
 
-                    <div className="flex gap-3">
-                        <input
-                            value={text}
-                            onChange={(event) => setText(event.target.value)}
-                            className="flex-1 rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
-                            placeholder="Ecris un message..."
-                        />
-                        <button
-                            onClick={handleSend}
-                            className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-3 text-sm font-semibold"
-                        >
-                            Envoyer
-                        </button>
-                    </div>
+                    {premiumAccess ? (
+                        <div className="flex gap-3">
+                            <input
+                                value={text}
+                                onChange={(event) => setText(event.target.value)}
+                                className="flex-1 rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
+                                placeholder="Ecris un message..."
+                            />
+                            <button
+                                onClick={handleSend}
+                                className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-3 text-sm font-semibold"
+                            >
+                                Envoyer
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            {!token ? (
+                                <Link
+                                    href={`/auth/login?redirect=/chat/${id}`}
+                                    className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-3 text-sm font-semibold text-center"
+                                >
+                                    Se connecter
+                                </Link>
+                            ) : (
+                                <Link
+                                    href="/offers"
+                                    className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-3 text-sm font-semibold text-center"
+                                >
+                                    S&apos;abonner
+                                </Link>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
             <Footer />
