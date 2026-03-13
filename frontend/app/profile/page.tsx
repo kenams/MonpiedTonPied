@@ -8,6 +8,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { apiUrl } from '../lib/api';
 import { clearAuthToken, getAuthToken } from '../lib/auth';
+import { useLocale } from '../components/LocaleProvider';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,7 @@ type UserProfile = {
 };
 
 export default function ProfilePage() {
+    const { t } = useLocale();
     const [token, setToken] = useState(() => getAuthToken());
     const [user, setUser] = useState<UserProfile | null>(null);
     const [formState, setFormState] = useState({
@@ -70,15 +72,15 @@ export default function ProfilePage() {
         const canceled = params.get('canceled');
 
         if (success === 'pass') {
-            setMessage('Pass active. Acces premium 30 jours.');
+            setMessage(t('profile.passActive'));
             loadProfile();
         } else if (success === 'subscription') {
-            setMessage('Abonnement active. Chat et contenu debloques.');
+            setMessage(t('profile.subscriptionActive'));
             loadProfile();
         } else if (canceled === 'pass' || canceled === 'subscription') {
-            setMessage('Paiement annule. Aucun changement applique.');
+            setMessage(t('profile.paymentCanceled'));
         }
-    }, [loadProfile]);
+    }, [loadProfile, t]);
 
     const handleLogout = () => {
         clearAuthToken();
@@ -99,11 +101,11 @@ export default function ProfilePage() {
         });
         const data = await response.json();
         if (!response.ok) {
-            setMessage(data.message || 'Erreur de sauvegarde.');
+            setMessage(data.message || t('profile.saveError'));
             return;
         }
         setUser(data);
-        setMessage('Profil mis a jour.');
+        setMessage(t('profile.profileUpdated'));
     };
 
     const handleAvatarUpload = async (file: File | null) => {
@@ -118,11 +120,11 @@ export default function ProfilePage() {
         });
         const data = await response.json();
         if (!response.ok) {
-            setMessage(data.message || 'Upload impossible.');
+            setMessage(data.message || t('profile.uploadFailed'));
         } else {
             setFormState((prev) => ({ ...prev, avatarUrl: data.url }));
             setUser((prev) => (prev ? { ...prev, avatarUrl: data.url } : prev));
-            setMessage('Avatar mis a jour.');
+            setMessage(t('profile.avatarUpdated'));
         }
         setUploadingAvatar(false);
     };
@@ -142,7 +144,7 @@ export default function ProfilePage() {
         });
         const data = await response.json();
         if (!response.ok) {
-            setMessage(data.message || 'Portail Stripe indisponible.');
+            setMessage(data.message || t('profile.stripeUnavailable'));
             return;
         }
         if (data.url) {
@@ -151,18 +153,18 @@ export default function ProfilePage() {
     };
 
     const planLabel = user?.subscriptionStatus === 'active'
-        ? 'Abonnement actif'
+        ? t('profile.activeSubscription')
         : user?.passStatus === 'active'
-        ? 'Pass actif'
+        ? t('profile.activePass')
         : user?.subscriptionStatus === 'pending'
-        ? 'Abonnement en attente'
+        ? t('profile.pendingSubscription')
         : user?.subscriptionStatus === 'expired'
-        ? 'Abonnement expire'
+        ? t('profile.expiredSubscription')
         : user?.subscriptionStatus === 'canceled'
-        ? 'Abonnement annule'
+        ? t('profile.canceledSubscription')
         : user?.subscriptionStatus === 'suspended'
-        ? 'Compte suspendu'
-        : 'Aucun plan actif';
+        ? t('profile.suspendedAccount')
+        : t('profile.noActivePlan');
 
     return (
         <div className="min-h-screen">
@@ -172,15 +174,15 @@ export default function ProfilePage() {
                 <div className="glass rounded-3xl p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
                     <div className="space-y-3">
                         <p className="uppercase tracking-[0.35em] text-xs text-[#d8c7a8]">
-                            Espace personnel
+                            {t('profile.memberArea')}
                         </p>
                         <h1 className="text-4xl font-semibold text-[#f4ede3]">
-                            {user ? user.displayName : 'Profil personnel'}
+                            {user ? user.displayName : t('profile.personalProfile')}
                         </h1>
                         <p className="text-[#b7ad9c] max-w-xl">
                             {user?.role === 'creator'
-                                ? 'Gere ta vitrine publique, tes demandes custom et tes revenus.'
-                                : 'Gere tes favoris, tes acces premium et tes achats.'}
+                                ? t('profile.creatorIntro')
+                                : t('profile.consumerIntro')}
                         </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -189,7 +191,7 @@ export default function ProfilePage() {
                                 href="/create"
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-6 py-3 font-semibold text-sm"
                             >
-                                Publier un contenu
+                                {t('profile.publish')}
                             </Link>
                         )}
                         {user?.role === 'creator' && (
@@ -197,7 +199,7 @@ export default function ProfilePage() {
                                 href="/dashboard/creator"
                                 className="rounded-full border border-white/15 px-6 py-3 font-semibold text-sm text-[#d6cbb8]"
                             >
-                                Dashboard
+                                {t('profile.dashboard')}
                             </Link>
                         )}
                         {token ? (
@@ -205,14 +207,14 @@ export default function ProfilePage() {
                                 onClick={handleLogout}
                                 className="rounded-full border border-white/15 px-6 py-3 font-semibold text-sm text-[#d6cbb8]"
                             >
-                                Se deconnecter
+                                {t('profile.logout')}
                             </button>
                         ) : (
                             <Link
                                 href="/auth/login"
                                 className="rounded-full border border-white/15 px-6 py-3 font-semibold text-sm text-[#d6cbb8]"
                             >
-                                Se connecter
+                                {t('profile.login')}
                             </Link>
                         )}
                     </div>
@@ -220,11 +222,11 @@ export default function ProfilePage() {
 
                 {!token && (
                     <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 text-[#f0d8ac]">
-                        Tu n&apos;es pas connecte.{' '}
+                        {t('profile.notLogged')}{' '}
                         <Link href="/auth/login" className="font-semibold underline">
-                            Connecte-toi
+                            {t('profile.loginPrompt')}
                         </Link>{' '}
-                        pour acceder a ton profil.
+                        {t('profile.accessProfile')}
                     </div>
                 )}
 
@@ -232,7 +234,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-8">
                         <div className="rounded-3xl bg-white/5 p-8 shadow-lg space-y-5 border border-white/5">
                             <h2 className="text-2xl font-semibold text-[#f4ede3]">
-                                Informations publiques
+                                {t('profile.publicInfo')}
                             </h2>
                             {message && (
                                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
@@ -240,7 +242,7 @@ export default function ProfilePage() {
                                 </div>
                             )}
                             <label className="block space-y-2">
-                                <span className="text-sm text-[#b7ad9c]">Pseudo</span>
+                                <span className="text-sm text-[#b7ad9c]">{t('profile.username')}</span>
                                 <input
                                     value={formState.displayName}
                                     onChange={(event) =>
@@ -253,7 +255,7 @@ export default function ProfilePage() {
                                 />
                             </label>
                             <div className="space-y-3">
-                                <span className="text-sm text-[#b7ad9c]">Avatar</span>
+                                <span className="text-sm text-[#b7ad9c]">{t('profile.avatar')}</span>
                                 <div className="flex items-center gap-4">
                                     <div className="h-16 w-16 rounded-2xl bg-[#15131b] overflow-hidden border border-white/10">
                                         {formState.avatarUrl ? (
@@ -284,14 +286,14 @@ export default function ProfilePage() {
                                         }))
                                     }
                                     className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
-                                    placeholder="ou colle une URL"
+                                    placeholder={t('profile.pasteUrl')}
                                 />
                                 {uploadingAvatar && (
-                                    <p className="text-xs text-[#b7ad9c]">Upload en cours...</p>
+                                    <p className="text-xs text-[#b7ad9c]">{t('profile.uploading')}</p>
                                 )}
                             </div>
                             <label className="block space-y-2">
-                                <span className="text-sm text-[#b7ad9c]">Bio</span>
+                                <span className="text-sm text-[#b7ad9c]">{t('profile.bio')}</span>
                                 <textarea
                                     value={formState.bio}
                                     onChange={(event) =>
@@ -308,21 +310,21 @@ export default function ProfilePage() {
                                 onClick={handleSave}
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-6 py-2 text-sm font-semibold"
                             >
-                                Enregistrer
+                                {t('profile.save')}
                             </button>
                         </div>
 
                         <div className="rounded-3xl bg-white/5 p-8 shadow-lg space-y-4 border border-white/5">
                             <h3 className="text-lg font-semibold text-[#f4ede3]">
-                                Statut
+                                {t('profile.status')}
                             </h3>
                             <div className="space-y-2 text-sm text-[#b7ad9c]">
-                                <p>Age verifie: {user.ageVerified ? 'oui' : 'non'}</p>
-                                <p>Email verifie: {user.emailVerified ? 'oui' : 'non'}</p>
-                                <p>Plan: {planLabel}</p>
-                                <p>Role: {user.role}</p>
+                                <p>{t('profile.ageVerified')}: {user.ageVerified ? t('profile.yes') : t('profile.no')}</p>
+                                <p>{t('profile.emailVerified')}: {user.emailVerified ? t('profile.yes') : t('profile.no')}</p>
+                                <p>{t('profile.plan')}: {planLabel}</p>
+                                <p>{t('profile.role')}: {user.role}</p>
                                 {user.role === 'creator' && (
-                                    <p>Creator verifie: {user.verifiedCreator ? 'oui' : 'non'}</p>
+                                    <p>{t('profile.creatorVerified')}: {user.verifiedCreator ? t('profile.yes') : t('profile.no')}</p>
                                 )}
                             </div>
                             {!user.emailVerified && (
@@ -330,12 +332,12 @@ export default function ProfilePage() {
                                     href="/auth/verify"
                                     className="inline-flex text-sm font-semibold text-[#f0d8ac]"
                                 >
-                                    Verifier mon email -&gt;
+                                    {t('profile.verifyEmail')}
                                 </Link>
                             )}
                             {user.isSuspended && (
                                 <p className="text-sm text-[#f0d8ac]">
-                                    Profil suspendu temporairement
+                                    {t('profile.temporarilySuspended')}
                                 </p>
                             )}
                             {user.subscriptionStatus === 'active' && (
@@ -343,7 +345,7 @@ export default function ProfilePage() {
                                     onClick={handleManageSubscription}
                                     className="rounded-full border border-[#3a2c1a] px-5 py-2 text-sm font-semibold text-[#f0d8ac] mt-2"
                                 >
-                                    Gerer mon abonnement
+                                    {t('profile.manageSubscription')}
                                 </button>
                             )}
                             {user.role === 'creator' ? (
@@ -351,14 +353,14 @@ export default function ProfilePage() {
                                     href="/requests"
                                     className="inline-flex text-sm font-semibold text-[#f0d8ac]"
                                 >
-                                    Voir les demandes custom -&gt;
+                                    {t('profile.viewCustomRequests')}
                                 </Link>
                             ) : (
                                 <Link
                                     href="/offers"
                                     className="inline-flex text-sm font-semibold text-[#f0d8ac]"
                                 >
-                                    Voir les offres -&gt;
+                                    {t('profile.viewOffers')}
                                 </Link>
                             )}
                         </div>

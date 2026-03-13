@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import { apiUrl, API_BASE } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
 import { getPushStatus, registerPush, unregisterPush } from '../lib/push';
+import { useLocale } from '../components/LocaleProvider';
 
 type NotificationItem = {
     id: string;
@@ -18,6 +19,7 @@ type NotificationItem = {
 };
 
 export default function NotificationsPage() {
+    const { t } = useLocale();
     const token = getAuthToken();
     const [items, setItems] = useState<NotificationItem[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -34,11 +36,11 @@ export default function NotificationsPage() {
             });
             const data = await res.json();
             if (!res.ok) {
-                throw new Error(data.message || 'Erreur.');
+                throw new Error(data.message || t('notifications.error'));
             }
             setItems(Array.isArray(data) ? data : []);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erreur.');
+            setError(err instanceof Error ? err.message : t('notifications.error'));
         }
     };
 
@@ -52,7 +54,7 @@ export default function NotificationsPage() {
                 setPushMessage(result.message);
             }
         } catch {
-            setPushMessage('Statut push indisponible.');
+            setPushMessage(t('notifications.pushStatusUnavailable'));
         }
     };
 
@@ -116,13 +118,13 @@ export default function NotificationsPage() {
             <Navigation />
             <div className="max-w-4xl mx-auto px-6 py-12 space-y-6">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-semibold text-[#f4ede3]">Notifications</h1>
+                    <h1 className="text-3xl font-semibold text-[#f4ede3]">{t('notifications.title')}</h1>
                     {items.length > 0 && (
                         <button
                             onClick={markAllRead}
                             className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac]"
                         >
-                            Tout marquer lu
+                            {t('notifications.markAllRead')}
                         </button>
                     )}
                 </div>
@@ -135,7 +137,7 @@ export default function NotificationsPage() {
 
                 {!token && (
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                        Connecte-toi pour voir tes notifications.
+                        {t('notifications.loginRequired')}
                     </div>
                 )}
 
@@ -151,14 +153,14 @@ export default function NotificationsPage() {
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p className="text-sm font-semibold text-[#f4ede3]">
-                                        Notifications navigateur
+                                        {t('notifications.browserPush')}
                                     </p>
                                     <p className="text-xs text-[#b7ad9c]">
                                         {pushConfigured
                                             ? pushEnabled
-                                                ? 'Actives sur cet appareil.'
-                                                : 'Desactivees sur cet appareil.'
-                                            : 'Service push non configure sur le serveur.'}
+                                                ? t('notifications.pushActive')
+                                                : t('notifications.pushDisabled')
+                                            : t('notifications.pushUnconfigured')}
                                     </p>
                                 </div>
                                 <button
@@ -166,7 +168,11 @@ export default function NotificationsPage() {
                                     onClick={togglePush}
                                     className="rounded-full border border-[#3a2c1a] px-4 py-2 text-xs font-semibold text-[#f0d8ac] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    {pushBusy ? 'Mise a jour...' : pushEnabled ? 'Desactiver' : 'Activer'}
+                                    {pushBusy
+                                        ? t('notifications.updating')
+                                        : pushEnabled
+                                        ? t('notifications.disable')
+                                        : t('notifications.enable')}
                                 </button>
                             </div>
                         </div>
@@ -174,7 +180,7 @@ export default function NotificationsPage() {
 
                     {items.length === 0 && token && (
                         <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#b7ad9c]">
-                            Aucune notification pour le moment.
+                            {t('notifications.empty')}
                         </div>
                     )}
 
@@ -187,7 +193,7 @@ export default function NotificationsPage() {
                             <p className="text-sm text-[#b7ad9c]">{item.message}</p>
                             <p className="text-xs text-[#6f675a]">
                                 {new Date(item.createdAt).toLocaleString()}
-                                {item.readAt ? ' - lu' : ''}
+                                {item.readAt ? ` - ${t('notifications.read')}` : ''}
                             </p>
                         </div>
                     ))}

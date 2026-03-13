@@ -2,66 +2,53 @@
 
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
+import { useLocale } from '../../components/LocaleProvider';
 
 export default function PrivacyPage() {
+    const { t } = useLocale();
     return (
         <div className="min-h-screen">
             <Navigation />
             <div className="max-w-4xl mx-auto px-6 py-14 space-y-8">
                 <div className="space-y-3">
-                    <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">Legal</p>
-                    <h1 className="text-4xl font-semibold text-[#f4ede3]">Politique de Confidentialite</h1>
-                    <p className="text-[#b7ad9c]">Derniere mise a jour : 27 fevrier 2026</p>
+                    <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">{t('legalCommon.legal')}</p>
+                    <h1 className="text-4xl font-semibold text-[#f4ede3]">{t('legalPrivacy.title')}</h1>
+                    <p className="text-[#b7ad9c]">{t('legalCommon.updated')}</p>
                 </div>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">1. Donnees collectees</h2>
-                    <p className="text-[#b7ad9c]">
-                        Nous collectons les informations necessaires a la creation du
-                        compte, a la verification d&apos;age et au traitement des paiements.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalPrivacy.s1')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalPrivacy.s1Body')}</p>
                     <ul className="text-sm text-[#b7ad9c] space-y-2">
-                        <li>Identite, email, date de naissance.</li>
-                        <li>Informations de profil (pseudo, bio, avatar).</li>
-                        <li>Historique des achats et des acces.</li>
+                        <li>{t('legalPrivacy.s1b1')}</li>
+                        <li>{t('legalPrivacy.s1b2')}</li>
+                        <li>{t('legalPrivacy.s1b3')}</li>
                     </ul>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">2. Usage</h2>
-                    <p className="text-[#b7ad9c]">
-                        Les donnees servent a securiser la plateforme, personnaliser
-                        l&apos;experience et respecter nos obligations legales.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalPrivacy.s2')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalPrivacy.s2Body')}</p>
                     <ul className="text-sm text-[#b7ad9c] space-y-2">
-                        <li>Verification d&apos;age et moderation.</li>
-                        <li>Gestion des paiements et des acces.</li>
-                        <li>Support et resolution des litiges.</li>
+                        <li>{t('legalPrivacy.s2b1')}</li>
+                        <li>{t('legalPrivacy.s2b2')}</li>
+                        <li>{t('legalPrivacy.s2b3')}</li>
                     </ul>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">3. Conservation</h2>
-                    <p className="text-[#b7ad9c]">
-                        Les donnees sont conservees pendant la duree necessaire a
-                        l&apos;execution du service et conforme aux exigences legales.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalPrivacy.s3')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalPrivacy.s3Body')}</p>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">4. Partage</h2>
-                    <p className="text-[#b7ad9c]">
-                        Les donnees ne sont partagees qu&apos;avec nos prestataires
-                        essentiels (paiement, hebergement) et uniquement pour fournir
-                        le service.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalPrivacy.s4')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalPrivacy.s4Body')}</p>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">5. Contact</h2>
-                    <p className="text-[#b7ad9c]">
-                        Pour toute demande, ecris a support@monpiedtonpied.com.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalPrivacy.s5')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalPrivacy.s5Body')}</p>
                 </section>
             </div>
             <Footer />

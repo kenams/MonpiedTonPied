@@ -6,8 +6,10 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { apiUrl } from '../lib/api';
 import { getAuthToken } from '../lib/auth';
+import { useLocale } from '../components/LocaleProvider';
 
 export default function PremiumPage() {
+    const { t } = useLocale();
     const token = getAuthToken();
     const [premiumAccess, setPremiumAccess] = useState<boolean | null>(
         token ? null : false
@@ -39,23 +41,23 @@ export default function PremiumPage() {
             <div className="mx-auto max-w-5xl space-y-8 px-6 py-12">
                 <div className="space-y-2">
                     <p className="text-xs uppercase tracking-[0.35em] text-[#d8c7a8]">
-                        Espace membre
+                        {t('premium.eyebrow')}
                     </p>
-                    <h1 className="text-4xl font-semibold text-[#f4ede3]">Premium</h1>
+                    <h1 className="text-4xl font-semibold text-[#f4ede3]">{t('premium.title')}</h1>
                     <p className="text-[#b7ad9c]">
-                        Acces complet a la galerie et au chat.
+                        {t('premium.subtitle')}
                     </p>
                 </div>
 
                 {!token && (
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                        Connecte-toi pour acceder a l&apos;espace premium.
+                        {t('premium.loginRequired')}
                     </div>
                 )}
 
                 {token && premiumAccess === false && (
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
-                        Abonnement requis pour acceder a l&apos;espace premium.
+                        {t('premium.subscriptionRequired')}
                     </div>
                 )}
 
@@ -65,19 +67,19 @@ export default function PremiumPage() {
                             href="/browse"
                             className="rounded-3xl border border-white/10 bg-white/5 p-6 font-semibold text-[#f4ede3]"
                         >
-                            Galerie premium
+                            {t('premium.gallery')}
                         </Link>
                         <Link
                             href="/creators"
                             className="rounded-3xl border border-white/10 bg-white/5 p-6 font-semibold text-[#f4ede3]"
                         >
-                            Models et profils
+                            {t('premium.models')}
                         </Link>
                         <Link
                             href="/profile"
                             className="rounded-3xl border border-white/10 bg-white/5 p-6 font-semibold text-[#f4ede3]"
                         >
-                            Gerer mon abonnement
+                            {t('premium.manage')}
                         </Link>
                     </div>
                 ) : (
@@ -87,14 +89,14 @@ export default function PremiumPage() {
                                 href="/auth/login?redirect=/premium"
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 text-center text-sm font-semibold text-[#0b0a0f]"
                             >
-                                Se connecter
+                                {t('premium.login')}
                             </Link>
                         ) : (
                             <Link
                                 href="/offers"
                                 className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 text-center text-sm font-semibold text-[#0b0a0f]"
                             >
-                                S&apos;abonner
+                                {t('premium.subscribe')}
                             </Link>
                         )}
                     </div>

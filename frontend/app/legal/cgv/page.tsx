@@ -2,68 +2,53 @@
 
 import Navigation from '../../components/Navigation';
 import Footer from '../../components/Footer';
+import { useLocale } from '../../components/LocaleProvider';
 
 export default function CGVPage() {
+    const { t } = useLocale();
     return (
         <div className="min-h-screen">
             <Navigation />
             <div className="max-w-4xl mx-auto px-6 py-14 space-y-8">
                 <div className="space-y-3">
-                    <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">Legal</p>
-                    <h1 className="text-4xl font-semibold text-[#f4ede3]">Conditions Generales de Vente</h1>
-                    <p className="text-[#b7ad9c]">Derniere mise a jour : 27 fevrier 2026</p>
+                    <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">{t('legalCommon.legal')}</p>
+                    <h1 className="text-4xl font-semibold text-[#f4ede3]">{t('legalCgv.title')}</h1>
+                    <p className="text-[#b7ad9c]">{t('legalCommon.updated')}</p>
                 </div>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">1. Offres</h2>
-                    <p className="text-[#b7ad9c]">
-                        Pass 5,99 EUR (30 jours) ou abonnement 11,99 EUR. L&apos;achat
-                        a l&apos;unite est fixe par chaque createur.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalCgv.s1')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalCgv.s1Body')}</p>
                     <ul className="text-sm text-[#b7ad9c] space-y-2">
-                        <li>Pass: acces complet aux collections pendant 30 jours.</li>
-                        <li>Abonnement: acces complet + chat illimite.</li>
-                        <li>A l&apos;unite: prix libre par createur.</li>
+                        <li>{t('legalCgv.s1b1')}</li>
+                        <li>{t('legalCgv.s1b2')}</li>
+                        <li>{t('legalCgv.s1b3')}</li>
                     </ul>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">2. Paiements</h2>
-                    <p className="text-[#b7ad9c]">
-                        Les paiements sont securises et traites par Stripe. L&apos;acces
-                        est active apres validation du paiement.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalCgv.s2')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalCgv.s2Body')}</p>
                     <ul className="text-sm text-[#b7ad9c] space-y-2">
-                        <li>Transactions en EUR.</li>
-                        <li>Facture disponible dans le profil.</li>
-                        <li>En cas d&apos;echec, l&apos;acces reste bloque.</li>
+                        <li>{t('legalCgv.s2b1')}</li>
+                        <li>{t('legalCgv.s2b2')}</li>
+                        <li>{t('legalCgv.s2b3')}</li>
                     </ul>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">3. Repartition</h2>
-                    <p className="text-[#b7ad9c]">
-                        Les createurs sont remuneres apres deduction des frais de
-                        plateforme. Le taux actuel est affiche dans l&apos;interface
-                        createur.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalCgv.s3')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalCgv.s3Body')}</p>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">4. Demandes personnalisees</h2>
-                    <p className="text-[#b7ad9c]">
-                        Le consommateur peut commander un contenu sur demande. Le
-                        createur dispose de 48h pour repondre. Le contenu doit rester
-                        strictement autour des pieds.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalCgv.s4')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalCgv.s4Body')}</p>
                 </section>
 
                 <section className="glass rounded-3xl p-8 space-y-4">
-                    <h2 className="text-2xl font-semibold text-[#f4ede3]">5. Remboursements</h2>
-                    <p className="text-[#b7ad9c]">
-                        Les remboursements sont examines au cas par cas selon les
-                        politiques en vigueur et le respect de la charte.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-[#f4ede3]">{t('legalCgv.s5')}</h2>
+                    <p className="text-[#b7ad9c]">{t('legalCgv.s5Body')}</p>
                 </section>
             </div>
             <Footer />

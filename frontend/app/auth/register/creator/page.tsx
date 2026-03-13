@@ -7,8 +7,10 @@ import Navigation from '../../../components/Navigation';
 import Footer from '../../../components/Footer';
 import { apiUrl } from '../../../lib/api';
 import { setAuthToken } from '../../../lib/auth';
+import { useLocale } from '../../../components/LocaleProvider';
 
 export default function CreatorRegisterPage() {
+    const { t } = useLocale();
     const router = useRouter();
     const [username, setUsername] = useState('');
     const [displayName, setDisplayName] = useState('');
@@ -55,7 +57,7 @@ export default function CreatorRegisterPage() {
 
             const data = await response.json();
             if (!response.ok) {
-                throw new Error(data.message || 'Inscription impossible.');
+                throw new Error(data.message || t('registerCreator.registerFailed'));
             }
 
             if (data.token) {
@@ -66,13 +68,13 @@ export default function CreatorRegisterPage() {
             }
             if (data.verificationRequired) {
                 setInfo(
-                    'Verification email requise. Consulte ta boite mail pour activer le compte.'
+                    t('registerCreator.verificationRequired')
                 );
                 return;
             }
             router.push('/auth/login');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Inscription impossible.');
+            setError(err instanceof Error ? err.message : t('registerCreator.registerFailed'));
         } finally {
             setLoading(false);
         }
@@ -85,30 +87,29 @@ export default function CreatorRegisterPage() {
             <div className="max-w-5xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
                 <div className="space-y-5">
                     <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">
-                        Compte creator
+                        {t('registerCreator.eyebrow')}
                     </p>
                     <h1 className="text-4xl font-semibold text-[#f4ede3]">
-                        Ton univers merite une vitrine premium.
+                        {t('registerCreator.title')}
                     </h1>
                     <p className="text-[#b7ad9c]">
-                        Ajoute une bio claire, un pseudo memorable et confirme ton age.
-                        Les demandes custom respectent la thematique pieds.
+                        {t('registerCreator.subtitle')}
                     </p>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-[#b7ad9c]">
-                        <p>Charte: pas de contenu hors thematique pieds.</p>
-                        <p>Reponse aux demandes custom sous 48h.</p>
+                        <p>{t('registerCreator.charter1')}</p>
+                        <p>{t('registerCreator.charter2')}</p>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="glass rounded-3xl p-8 space-y-5">
                     <div>
                         <h2 className="text-2xl font-semibold text-[#f4ede3]">
-                            Inscription creator
+                            {t('registerCreator.formTitle')}
                         </h2>
                         <p className="text-sm text-[#b7ad9c]">
-                            Deja un compte ?{' '}
+                            {t('registerCreator.alreadyAccount')}{' '}
                             <Link href="/auth/login" className="text-[#f0d8ac] font-semibold">
-                                Se connecter
+                                {t('registerCreator.login')}
                             </Link>
                         </p>
                     </div>
@@ -125,40 +126,40 @@ export default function CreatorRegisterPage() {
                     )}
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Pseudo public</span>
+                        <span className="text-sm text-[#b7ad9c]">{t('registerCreator.publicName')}</span>
                         <input
                             value={displayName}
                             onChange={(event) => setDisplayName(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
-                            placeholder="Ex: Luna Atelier"
+                            placeholder={t('registerCreator.publicNamePlaceholder')}
                             required
                         />
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Nom d&apos;utilisateur</span>
+                        <span className="text-sm text-[#b7ad9c]">{t('registerCreator.username')}</span>
                         <input
                             value={username}
                             onChange={(event) => setUsername(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
-                            placeholder="ex: lunaatelier"
+                            placeholder={t('registerCreator.usernamePlaceholder')}
                             required
                         />
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Email</span>
+                        <span className="text-sm text-[#b7ad9c]">{t('registerCreator.email')}</span>
                         <input
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
-                            placeholder="hello@exemple.com"
+                            placeholder={t('registerCreator.emailPlaceholder')}
                             required
                         />
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Date de naissance</span>
+                        <span className="text-sm text-[#b7ad9c]">{t('registerCreator.birthDate')}</span>
                         <input
                             type="date"
                             value={birthDate}
@@ -169,18 +170,18 @@ export default function CreatorRegisterPage() {
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Bio</span>
+                        <span className="text-sm text-[#b7ad9c]">{t('registerCreator.bio')}</span>
                         <textarea
                             value={bio}
                             onChange={(event) => setBio(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
                             rows={4}
-                            placeholder="Parle de ton univers, de ta lumiere, de ton style."
+                            placeholder={t('registerCreator.bioPlaceholder')}
                         />
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Avatar</span>
+                        <span className="text-sm text-[#b7ad9c]">{t('registerCreator.avatar')}</span>
                         <input
                             type="file"
                             accept="image/*"
@@ -192,13 +193,13 @@ export default function CreatorRegisterPage() {
                     </label>
 
                     <label className="block space-y-2">
-                        <span className="text-sm text-[#b7ad9c]">Mot de passe</span>
+                        <span className="text-sm text-[#b7ad9c]">{t('registerCreator.password')}</span>
                         <input
                             type="password"
                             value={password}
                             onChange={(event) => setPassword(event.target.value)}
                             className="w-full rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3] placeholder:text-[#6f675a]"
-                            placeholder="Minimum 8 caracteres"
+                            placeholder={t('registerCreator.passwordPlaceholder')}
                             required
                         />
                     </label>
@@ -208,7 +209,7 @@ export default function CreatorRegisterPage() {
                         disabled={loading}
                         className="w-full rounded-xl bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 text-[#0b0a0f] font-semibold shadow-lg transition disabled:opacity-60"
                     >
-                        {loading ? 'Creation...' : 'Creer mon compte creator'}
+                        {loading ? t('registerCreator.creating') : t('registerCreator.submit')}
                     </button>
                 </form>
             </div>
