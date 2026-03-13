@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
@@ -8,7 +8,7 @@ import Footer from '../../components/Footer';
 import { apiUrl } from '../../lib/api';
 import { setAuthToken } from '../../lib/auth';
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams?.get('redirect') || '/';
@@ -51,12 +51,12 @@ export default function LoginPage() {
         <div className="min-h-screen">
             <Navigation />
 
-            <div className="max-w-6xl mx-auto px-6 py-14 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-2">
                 <div className="space-y-6">
-                    <p className="uppercase tracking-[0.3em] text-xs text-[#d8c7a8]">
+                    <p className="text-xs uppercase tracking-[0.3em] text-[#d8c7a8]">
                         MonPiedTonPied
                     </p>
-                    <h1 className="text-4xl md:text-5xl font-semibold text-[#f4ede3]">
+                    <h1 className="text-4xl font-semibold text-[#f4ede3] md:text-5xl">
                         Heureux de te revoir.
                     </h1>
                     <p className="text-lg text-[#b7ad9c]">
@@ -71,26 +71,21 @@ export default function LoginPage() {
                                     consumer@monpiedtonpied.local
                                 </p>
                             </div>
-                            <span className="text-xs rounded-full bg-[#2a2218] px-3 py-1 text-[#f0d8ac] border border-[#3a2c1a]">
+                            <span className="rounded-full border border-[#3a2c1a] bg-[#2a2218] px-3 py-1 text-xs text-[#f0d8ac]">
                                 mot de passe: demo1234
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="glass rounded-3xl p-8 space-y-6"
-                >
+                <form onSubmit={handleSubmit} className="glass rounded-3xl p-8 space-y-6">
                     <div>
-                        <h2 className="text-2xl font-semibold text-[#f4ede3]">
-                            Connexion
-                        </h2>
+                        <h2 className="text-2xl font-semibold text-[#f4ede3]">Connexion</h2>
                         <p className="text-sm text-[#b7ad9c]">
                             Pas encore inscrit ?{' '}
                             <Link
                                 href="/auth/register"
-                                className="text-[#f0d8ac] font-semibold"
+                                className="font-semibold text-[#f0d8ac]"
                             >
                                 Creer un compte
                             </Link>
@@ -135,7 +130,7 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full rounded-xl bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 text-[#0b0a0f] font-semibold shadow-lg transition disabled:opacity-60"
+                        className="w-full rounded-xl bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-3 font-semibold text-[#0b0a0f] shadow-lg transition disabled:opacity-60"
                     >
                         {loading ? 'Connexion...' : 'Se connecter'}
                     </button>
@@ -143,5 +138,13 @@ export default function LoginPage() {
             </div>
             <Footer />
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={null}>
+            <LoginContent />
+        </Suspense>
     );
 }
