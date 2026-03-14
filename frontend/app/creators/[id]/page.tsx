@@ -439,7 +439,11 @@ export default function CreatorProfilePage({
                                 return (
                                     <div
                                         key={item.id}
-                                        className="rounded-2xl bg-white/5 shadow-lg overflow-hidden border border-white/5"
+                                        className={`rounded-2xl shadow-lg overflow-hidden border ${
+                                            item.unlocked
+                                                ? 'bg-white/5 border-white/5'
+                                                : 'bg-[#120f16] border-[#3a2c1a]'
+                                        }`}
                                     >
                                         <button
                                             type="button"
@@ -472,7 +476,9 @@ export default function CreatorProfilePage({
                                                             }
                                                         }}
                                                         className={`h-full w-full object-cover ${
-                                                            !item.unlocked ? 'blur-md' : ''
+                                                            !item.unlocked
+                                                                ? 'blur-xl scale-110 opacity-70'
+                                                                : ''
                                                         }`}
                                                     />
                                                 ) : (
@@ -480,7 +486,9 @@ export default function CreatorProfilePage({
                                                         src={mediaUrl}
                                                         alt={item.title}
                                                         className={`h-full w-full object-cover ${
-                                                            !item.unlocked ? 'blur-md' : ''
+                                                            !item.unlocked
+                                                                ? 'blur-xl scale-110 opacity-70'
+                                                                : ''
                                                         }`}
                                                     />
                                                 )
@@ -496,6 +504,11 @@ export default function CreatorProfilePage({
                                                         : t('creatorProfile.previewLabelPhoto')}
                                                 </div>
                                             )}
+                                            {!item.unlocked && (
+                                                <div className="absolute right-4 top-4 rounded-full bg-[#1b1510] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f0d8ac] border border-[#3a2c1a]">
+                                                    Premium
+                                                </div>
+                                            )}
                                             {mediaUrl && (
                                                 <div className="absolute bottom-4 right-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
                                                     {t('home.enlarge')}
@@ -503,10 +516,13 @@ export default function CreatorProfilePage({
                                             )}
                                             {videoPreview && <WatermarkOverlay />}
                                             {!item.unlocked && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[linear-gradient(180deg,rgba(7,6,11,0.2)_0%,rgba(7,6,11,0.7)_55%,rgba(7,6,11,0.88)_100%)] px-6 text-center">
                                                     <span className="rounded-full bg-[#15131b] px-4 py-2 text-xs font-semibold text-[#f0d8ac] border border-white/10">
                                                         {t('creatorProfile.locked')}
                                                     </span>
+                                                    <p className="max-w-[15rem] text-xs leading-5 text-[#d6cbb8]">
+                                                        {t('creatorProfile.subscribeToUnlock')}
+                                                    </p>
                                                 </div>
                                             )}
                                         </button>
@@ -521,6 +537,8 @@ export default function CreatorProfilePage({
                                                 <span className="text-xs text-[#b7ad9c]">
                                                     {hasFullAccess
                                                         ? t('creatorProfile.fullAccess')
+                                                        : !item.unlocked
+                                                        ? t('creatorProfile.locked')
                                                         : videoPreview
                                                         ? t('creatorProfile.previewLine')
                                                         : t('creatorProfile.previewLabelPhoto')}
