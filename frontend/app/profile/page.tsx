@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable react-hooks/set-state-in-effect */
 
@@ -28,10 +28,33 @@ type UserProfile = {
     premiumAccess?: boolean;
     verifiedCreator?: boolean;
     isSuspended?: boolean;
+    stripeConnectAccountId?: string | null;
+    stripeConnectPayoutReady?: boolean;
 };
 
 export default function ProfilePage() {
-    const { t } = useLocale();
+    const { t, locale } = useLocale();
+    const payoutCopy =
+        locale === 'fr'
+            ? {
+                  title: 'Paiements createur',
+                  body: 'Stripe Connect gere automatiquement les reversements sur les ventes et demandes custom.',
+                  ready: 'Compte Stripe actif. Les reversements automatiques sont disponibles.',
+                  pending: 'Configuration Stripe incomplete.',
+                  setup: 'Configurer Stripe',
+                  dashboard: 'Ouvrir Stripe',
+                  updated: 'Configuration Stripe mise a jour.',
+              }
+            : {
+                  title: 'Creator payouts',
+                  body: 'Stripe Connect automatically handles payouts on sales and custom requests.',
+                  ready: 'Stripe account active. Automatic payouts are available.',
+                  pending: 'Stripe setup is incomplete.',
+                  setup: 'Set up Stripe',
+                  dashboard: 'Open Stripe',
+                  updated: 'Stripe setup updated.',
+              };
+
     const [token, setToken] = useState(() => getAuthToken());
     const [user, setUser] = useState<UserProfile | null>(null);
     const [formState, setFormState] = useState({
@@ -70,6 +93,7 @@ export default function ProfilePage() {
         const params = new URLSearchParams(window.location.search);
         const success = params.get('success');
         const canceled = params.get('canceled');
+        const stripeState = params.get('stripe');
 
         if (success === 'pass') {
             setMessage(t('profile.passActive'));
@@ -77,10 +101,13 @@ export default function ProfilePage() {
         } else if (success === 'subscription') {
             setMessage(t('profile.subscriptionActive'));
             loadProfile();
+        } else if (stripeState === 'return' || stripeState === 'refresh') {
+            setMessage(payoutCopy.updated);
+            loadProfile();
         } else if (canceled === 'pass' || canceled === 'subscription') {
             setMessage(t('profile.paymentCanceled'));
         }
-    }, [loadProfile, t]);
+    }, [loadProfile, payoutCopy.updated, t]);
 
     const handleLogout = () => {
         clearAuthToken();
@@ -152,19 +179,64 @@ export default function ProfilePage() {
         }
     };
 
-    const planLabel = user?.subscriptionStatus === 'active'
-        ? t('profile.activeSubscription')
-        : user?.passStatus === 'active'
-        ? t('profile.activePass')
-        : user?.subscriptionStatus === 'pending'
-        ? t('profile.pendingSubscription')
-        : user?.subscriptionStatus === 'expired'
-        ? t('profile.expiredSubscription')
-        : user?.subscriptionStatus === 'canceled'
-        ? t('profile.canceledSubscription')
-        : user?.subscriptionStatus === 'suspended'
-        ? t('profile.suspendedAccount')
-        : t('profile.noActivePlan');
+    const handleStripeOnboarding = async () => {
+        if (!token) return;
+        setMessage(null);
+        const response = await fetch(apiUrl('/api/stripe/connect/onboarding'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                returnUrl: `${window.location.origin}/profile?stripe=return`,
+                refreshUrl: `${window.location.origin}/profile?stripe=refresh`,
+            }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            setMessage(data.message || t('profile.stripeUnavailable'));
+            return;
+        }
+        if (data.url) {
+            window.location.href = data.url;
+        }
+    };
+
+    const handleStripeDashboard = async () => {
+        if (!token) return;
+        setMessage(null);
+        const response = await fetch(apiUrl('/api/stripe/connect/dashboard-link'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            setMessage(data.message || t('profile.stripeUnavailable'));
+            return;
+        }
+        if (data.url) {
+            window.location.href = data.url;
+        }
+    };
+
+    const planLabel =
+        user?.subscriptionStatus === 'active'
+            ? t('profile.activeSubscription')
+            : user?.passStatus === 'active'
+              ? t('profile.activePass')
+              : user?.subscriptionStatus === 'pending'
+                ? t('profile.pendingSubscription')
+                : user?.subscriptionStatus === 'expired'
+                  ? t('profile.expiredSubscription')
+                  : user?.subscriptionStatus === 'canceled'
+                    ? t('profile.canceledSubscription')
+                    : user?.subscriptionStatus === 'suspended'
+                      ? t('profile.suspendedAccount')
+                      : t('profile.noActivePlan');
 
     return (
         <div className="min-h-screen">
@@ -270,9 +342,7 @@ export default function ProfilePage() {
                                         type="file"
                                         accept="image/*"
                                         onChange={(event) =>
-                                            handleAvatarUpload(
-                                                event.target.files?.[0] || null
-                                            )
+                                            handleAvatarUpload(event.target.files?.[0] || null)
                                         }
                                         className="flex-1 rounded-xl border border-white/10 bg-[#101016] px-4 py-3 text-[#f4ede3]"
                                     />
@@ -327,6 +397,39 @@ export default function ProfilePage() {
                                     <p>{t('profile.creatorVerified')}: {user.verifiedCreator ? t('profile.yes') : t('profile.no')}</p>
                                 )}
                             </div>
+                            {user.role === 'creator' && (
+                                <div className="rounded-2xl border border-[#3a2c1a] bg-[#1a1510] px-4 py-4 space-y-3">
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-[#f4ede3]">
+                                            {payoutCopy.title}
+                                        </h4>
+                                        <p className="mt-1 text-sm text-[#b7ad9c]">
+                                            {payoutCopy.body}
+                                        </p>
+                                    </div>
+                                    <p className="text-sm text-[#f0d8ac]">
+                                        {user.stripeConnectPayoutReady
+                                            ? payoutCopy.ready
+                                            : payoutCopy.pending}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            onClick={handleStripeOnboarding}
+                                            className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-4 py-2 text-sm font-semibold text-[#0b0a0f]"
+                                        >
+                                            {payoutCopy.setup}
+                                        </button>
+                                        {user.stripeConnectAccountId && (
+                                            <button
+                                                onClick={handleStripeDashboard}
+                                                className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-[#d6cbb8]"
+                                            >
+                                                {payoutCopy.dashboard}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                             {!user.emailVerified && (
                                 <Link
                                     href="/auth/verify"
@@ -371,6 +474,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-
-
-

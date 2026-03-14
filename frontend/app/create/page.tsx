@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -11,6 +11,14 @@ import { useLocale } from '../components/LocaleProvider';
 type UploadResult = {
     url: string;
     type: 'image' | 'video';
+};
+
+type CreatorPayoutState = {
+    accountId: string | null;
+    detailsSubmitted: boolean;
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+    payoutReady: boolean;
 };
 
 export default function CreatePage() {
@@ -28,6 +36,15 @@ export default function CreatePage() {
                   loginFirst: 'Connecte-toi avant de publier.',
                   titleRequired: 'Le titre est requis.',
                   priceNumber: 'Le prix doit etre un nombre.',
+                  stripeSetupRequired:
+                      'Complete ton onboarding Stripe avant de publier du contenu payant.',
+                  stripeStatusTitle: 'Paiements createur',
+                  stripeStatusBody:
+                      'Pour automatiser les ventes et reversements, termine le setup Stripe Connect.',
+                  stripeReady: 'Compte Stripe actif. Les ventes sont reversees automatiquement.',
+                  stripePending: 'Setup Stripe en attente.',
+                  stripeAction: 'Configurer Stripe',
+                  stripeDashboard: 'Ouvrir Stripe',
                   publishError: 'Erreur lors de la publication.',
                   success: 'Contenu publie.',
                   genericError: 'Erreur.',
@@ -54,7 +71,7 @@ export default function CreatePage() {
                   publishing: 'Publication...',
                   publish: 'Publier',
                   commission:
-                      'Commission plateforme: 20%. Paiement au creator sous 48h apres validation.',
+                      'Commission plateforme: 20%. Reversement automatique via Stripe Connect.',
                   publishingTips: 'Conseils de publication',
                   proTip:
                       "Pro tip: propose un prix d'appel pour attirer de nouveaux fans.",
@@ -72,6 +89,15 @@ export default function CreatePage() {
                   loginFirst: 'Log in before publishing.',
                   titleRequired: 'Title is required.',
                   priceNumber: 'Price must be numeric.',
+                  stripeSetupRequired:
+                      'Complete Stripe onboarding before publishing paid content.',
+                  stripeStatusTitle: 'Creator payouts',
+                  stripeStatusBody:
+                      'To automate sales and payouts, complete your Stripe Connect setup.',
+                  stripeReady: 'Stripe account active. Sales are split automatically.',
+                  stripePending: 'Stripe setup pending.',
+                  stripeAction: 'Set up Stripe',
+                  stripeDashboard: 'Open Stripe',
                   publishError: 'Publishing failed.',
                   success: 'Content published.',
                   genericError: 'Error.',
@@ -97,7 +123,7 @@ export default function CreatePage() {
                   publishing: 'Publishing...',
                   publish: 'Publish',
                   commission:
-                      'Platform fee: 20%. Creator payout within 48h after validation.',
+                      'Platform fee: 20%. Automatic payout through Stripe Connect.',
                   publishingTips: 'Publishing tips',
                   proTip:
                       'Pro tip: use an entry price to attract new fans.',
@@ -106,6 +132,7 @@ export default function CreatePage() {
               };
     const [token, setToken] = useState('');
     const [isCreator, setIsCreator] = useState(false);
+    const [payoutState, setPayoutState] = useState<CreatorPayoutState | null>(null);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
@@ -124,10 +151,87 @@ export default function CreatePage() {
                 .then((res) => res.json())
                 .then((data) => {
                     setIsCreator(data.role === 'creator' || data.role === 'admin');
+                    if (
+                        data.role === 'creator' ||
+                        data.role === 'admin'
+                    ) {
+                        setPayoutState({
+                            accountId: data.stripeConnectAccountId || null,
+                            detailsSubmitted: Boolean(data.stripeConnectDetailsSubmitted),
+                            chargesEnabled: Boolean(data.stripeConnectChargesEnabled),
+                            payoutsEnabled: Boolean(data.stripeConnectPayoutsEnabled),
+                            payoutReady: Boolean(data.stripeConnectPayoutReady),
+                        });
+                    }
                 })
                 .catch(() => {});
         }
     }, []);
+
+    const refreshPayoutState = useCallback(async (authToken: string) => {
+        const response = await fetch(apiUrl('/api/stripe/connect/status'), {
+            headers: { Authorization: `Bearer ${authToken}` },
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || copy.genericError);
+        }
+        setPayoutState(data);
+    }, [copy.genericError]);
+
+    const handleStripeOnboarding = async () => {
+        if (!token) return;
+        setFormError(null);
+        const response = await fetch(apiUrl('/api/stripe/connect/onboarding'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                returnUrl: `${window.location.origin}/create?stripe=return`,
+                refreshUrl: `${window.location.origin}/create?stripe=refresh`,
+            }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            setFormError(data.message || copy.genericError);
+            return;
+        }
+        if (data.url) {
+            window.location.href = data.url;
+        }
+    };
+
+    const handleStripeDashboard = async () => {
+        if (!token) return;
+        setFormError(null);
+        const response = await fetch(apiUrl('/api/stripe/connect/dashboard-link'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            setFormError(data.message || copy.genericError);
+            return;
+        }
+        if (data.url) {
+            window.location.href = data.url;
+        }
+    };
+
+    useEffect(() => {
+        if (!token || !isCreator) return;
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const stripeState = params.get('stripe');
+        if (stripeState === 'return' || stripeState === 'refresh') {
+            refreshPayoutState(token).catch(() => {});
+        }
+    }, [token, isCreator, refreshPayoutState]);
 
     const uploadFile = async (): Promise<UploadResult | null> => {
         if (!file) {
@@ -169,6 +273,10 @@ export default function CreatePage() {
 
             if (price.trim() && !Number.isFinite(Number(price))) {
                 throw new Error(copy.priceNumber);
+            }
+
+            if (Number(price || 0) > 0 && isCreator && !payoutState?.payoutReady) {
+                throw new Error(copy.stripeSetupRequired);
             }
 
             const uploaded = await uploadFile();
@@ -269,6 +377,41 @@ export default function CreatePage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-8">
                     <div className="rounded-3xl bg-white/5 p-8 shadow-lg space-y-5 border border-white/5">
+                        {isCreator && (
+                            <div className="rounded-2xl border border-[#3a2c1a] bg-[#1a1510] px-5 py-5 space-y-4">
+                                <div className="space-y-1">
+                                    <h2 className="text-lg font-semibold text-[#f4ede3]">
+                                        {copy.stripeStatusTitle}
+                                    </h2>
+                                    <p className="text-sm text-[#b7ad9c]">
+                                        {copy.stripeStatusBody}
+                                    </p>
+                                </div>
+                                <p className="text-sm text-[#f0d8ac]">
+                                    {payoutState?.payoutReady
+                                        ? copy.stripeReady
+                                        : copy.stripePending}
+                                </p>
+                                <div className="flex flex-wrap gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={handleStripeOnboarding}
+                                        className="rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] px-5 py-2 text-sm font-semibold"
+                                    >
+                                        {copy.stripeAction}
+                                    </button>
+                                    {payoutState?.accountId && (
+                                        <button
+                                            type="button"
+                                            onClick={handleStripeDashboard}
+                                            className="rounded-full border border-white/15 px-5 py-2 text-sm font-semibold text-[#d6cbb8]"
+                                        >
+                                            {copy.stripeDashboard}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         {formError && (
                             <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[#f0d8ac]">
                                 {formError}

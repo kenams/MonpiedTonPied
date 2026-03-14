@@ -31,6 +31,15 @@ router.get('/me', auth, async (req, res) => {
             premiumAccess: access.premiumAccess,
             verifiedCreator: user.verifiedCreator,
             isSuspended: user.isSuspended,
+            stripeConnectAccountId: user.stripeConnectAccountId,
+            stripeConnectChargesEnabled: Boolean(user.stripeConnectChargesEnabled),
+            stripeConnectPayoutsEnabled: Boolean(user.stripeConnectPayoutsEnabled),
+            stripeConnectDetailsSubmitted: Boolean(user.stripeConnectDetailsSubmitted),
+            stripeConnectOnboardedAt: user.stripeConnectOnboardedAt,
+            stripeConnectPayoutReady:
+                Boolean(user.stripeConnectDetailsSubmitted) &&
+                Boolean(user.stripeConnectChargesEnabled) &&
+                Boolean(user.stripeConnectPayoutsEnabled),
         });
     } catch (error) {
         console.error('User me error:', error);
@@ -82,6 +91,15 @@ router.put('/me', auth, async (req, res) => {
             premiumAccess: access.premiumAccess,
             verifiedCreator: user.verifiedCreator,
             isSuspended: user.isSuspended,
+            stripeConnectAccountId: user.stripeConnectAccountId,
+            stripeConnectChargesEnabled: Boolean(user.stripeConnectChargesEnabled),
+            stripeConnectPayoutsEnabled: Boolean(user.stripeConnectPayoutsEnabled),
+            stripeConnectDetailsSubmitted: Boolean(user.stripeConnectDetailsSubmitted),
+            stripeConnectOnboardedAt: user.stripeConnectOnboardedAt,
+            stripeConnectPayoutReady:
+                Boolean(user.stripeConnectDetailsSubmitted) &&
+                Boolean(user.stripeConnectChargesEnabled) &&
+                Boolean(user.stripeConnectPayoutsEnabled),
         });
     } catch (error) {
         console.error('User update error:', error);
