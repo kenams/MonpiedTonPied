@@ -1,6 +1,4 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const auth = require('../middleware/auth');
@@ -9,16 +7,6 @@ const { normalizeRole } = require('../utils/accessControl');
 
 const router = express.Router();
 
-const uploadsRoot = path.join(__dirname, '..', 'uploads');
-const contentUploadDir = path.join(uploadsRoot, 'content');
-const avatarUploadDir = path.join(uploadsRoot, 'avatars');
-if (!fs.existsSync(contentUploadDir)) {
-    fs.mkdirSync(contentUploadDir, { recursive: true });
-}
-if (!fs.existsSync(avatarUploadDir)) {
-    fs.mkdirSync(avatarUploadDir, { recursive: true });
-}
-
 const cloudinaryConfigured = Boolean(
     process.env.CLOUDINARY_URL ||
         (process.env.CLOUDINARY_CLOUD_NAME &&
@@ -26,22 +14,15 @@ const cloudinaryConfigured = Boolean(
             process.env.CLOUDINARY_API_SECRET)
 );
 
-if (cloudinaryConfigured && !process.env.CLOUDINARY_URL) {
-    cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
+if (cloudinaryConfigured) {
+    if (!process.env.CLOUDINARY_URL) {
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+    }
 }
-
-const storage = multer.diskStorage({
-    destination: contentUploadDir,
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const safeBase = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-        cb(null, `${safeBase}${ext}`);
-    },
-});
 
 const fileFilter = (req, file, cb) => {
     if (!file.mimetype.startsWith('image/') && !file.mimetype.startsWith('video/')) {
@@ -58,33 +39,46 @@ const avatarFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-    storage,
+    storage: multer.memoryStorage(),
     fileFilter,
     limits: { fileSize: 20 * 1024 * 1024 },
 });
 
-const avatarStorage = multer.diskStorage({
-    destination: avatarUploadDir,
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const safeBase = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-        cb(null, `${safeBase}${ext}`);
-    },
-});
-
 const avatarUpload = multer({
-    storage: avatarStorage,
+    storage: multer.memoryStorage(),
     fileFilter: avatarFilter,
     limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-const uploadToCloudinary = async (filePath, mimetype) => {
-    const resourceType = mimetype.startsWith('video/') ? 'video' : 'image';
-    const result = await cloudinary.uploader.upload(filePath, {
-        resource_type: resourceType,
-        folder: 'monpiedtonpied',
+const ensureCloudinary = () => {
+    if (!cloudinaryConfigured) {
+        const error = new Error('Cloudinary non configure.');
+        error.statusCode = 500;
+        throw error;
+    }
+};
+
+const uploadToCloudinary = async (file, folder) => {
+    const resourceType = file.mimetype.startsWith('video/') ? 'video' : 'image';
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                resource_type: resourceType,
+                folder: `monpiedtonpied/${folder}`,
+                use_filename: true,
+                unique_filename: true,
+                filename_override: file.originalname,
+            },
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(result.secure_url || result.url);
+            }
+        );
+        uploadStream.end(file.buffer);
     });
-    return result.secure_url || result.url;
 };
 
 router.post('/', auth, async (req, res, next) => {
@@ -104,24 +98,20 @@ router.post('/', auth, async (req, res, next) => {
     }
 
     let url;
-    if (cloudinaryConfigured) {
-        try {
-            url = await uploadToCloudinary(req.file.path, req.file.mimetype);
-            fs.unlink(req.file.path, () => {});
-        } catch (error) {
-            console.error('Cloudinary upload error:', error);
-            return res.status(500).json({ message: 'Erreur upload cloud.' });
-        }
-    } else {
-        const baseUrl =
-            process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
-        url = `${baseUrl}/uploads/content/${req.file.filename}`;
+    try {
+        ensureCloudinary();
+        url = await uploadToCloudinary(req.file, 'content');
+    } catch (error) {
+        console.error('Cloudinary upload error:', error);
+        return res
+            .status(error.statusCode || 500)
+            .json({ message: 'Erreur upload cloud.' });
     }
 
     return res.status(201).json({
         url,
         type: req.file.mimetype.startsWith('video/') ? 'video' : 'image',
-        filename: req.file.filename,
+        filename: req.file.originalname,
         size: req.file.size,
     });
 });
@@ -137,18 +127,14 @@ router.post('/avatar', auth, avatarUpload.single('file'), async (req, res) => {
     }
 
     let url;
-    if (cloudinaryConfigured) {
-        try {
-            url = await uploadToCloudinary(req.file.path, req.file.mimetype);
-            fs.unlink(req.file.path, () => {});
-        } catch (error) {
-            console.error('Cloudinary upload error:', error);
-            return res.status(500).json({ message: 'Erreur upload cloud.' });
-        }
-    } else {
-        const baseUrl =
-            process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
-        url = `${baseUrl}/uploads/avatars/${req.file.filename}`;
+    try {
+        ensureCloudinary();
+        url = await uploadToCloudinary(req.file, 'avatars');
+    } catch (error) {
+        console.error('Cloudinary upload error:', error);
+        return res
+            .status(error.statusCode || 500)
+            .json({ message: 'Erreur upload cloud.' });
     }
 
     user.avatarUrl = url;
@@ -156,7 +142,7 @@ router.post('/avatar', auth, avatarUpload.single('file'), async (req, res) => {
 
     return res.status(201).json({
         url,
-        filename: req.file.filename,
+        filename: req.file.originalname,
         size: req.file.size,
     });
 });
