@@ -7,6 +7,12 @@ const isStripeConfigured = () => {
     );
 };
 
+const getStripeMode = () => {
+    const secretKey = process.env.STRIPE_SECRET_KEY || '';
+    if (secretKey.startsWith('sk_live_')) return 'live';
+    return 'test';
+};
+
 const getStripeClient = () => {
     if (!isStripeConfigured()) {
         return null;
@@ -16,5 +22,6 @@ const getStripeClient = () => {
 
 module.exports = {
     getStripeClient,
+    getStripeMode,
     isStripeConfigured,
 };

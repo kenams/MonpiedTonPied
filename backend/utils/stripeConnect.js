@@ -21,25 +21,53 @@ const applyConnectAccountSnapshot = (user, account) => {
     user.stripeConnectDetailsSubmitted = Boolean(account.details_submitted);
     user.stripeConnectChargesEnabled = Boolean(account.charges_enabled);
     user.stripeConnectPayoutsEnabled = Boolean(account.payouts_enabled);
+    user.stripeConnectEnv = account.livemode ? 'live' : 'test';
     if (user.stripeConnectDetailsSubmitted && !user.stripeConnectOnboardedAt) {
         user.stripeConnectOnboardedAt = new Date();
     }
     return getConnectState(user);
 };
 
-const syncConnectAccount = async (user, stripe) => {
+const resetConnectState = (user) => {
+    user.stripeConnectAccountId = null;
+    user.stripeConnectChargesEnabled = false;
+    user.stripeConnectPayoutsEnabled = false;
+    user.stripeConnectDetailsSubmitted = false;
+    user.stripeConnectOnboardedAt = null;
+    user.stripeConnectEnv = null;
+    return getConnectState(user);
+};
+
+const syncConnectAccount = async (user, stripe, stripeMode = 'test') => {
     if (!user?.stripeConnectAccountId) {
         return getConnectState(user);
     }
-    const account = await stripe.accounts.retrieve(user.stripeConnectAccountId);
-    const state = applyConnectAccountSnapshot(user, account);
-    await user.save();
-    return state;
+    if (user.stripeConnectEnv && user.stripeConnectEnv !== stripeMode) {
+        const state = resetConnectState(user);
+        await user.save();
+        return state;
+    }
+    try {
+        const account = await stripe.accounts.retrieve(user.stripeConnectAccountId);
+        const state = applyConnectAccountSnapshot(user, account);
+        await user.save();
+        return state;
+    } catch (error) {
+        if (error?.type === 'StripeInvalidRequestError' || error?.statusCode === 404) {
+            const state = resetConnectState(user);
+            await user.save();
+            return state;
+        }
+        throw error;
+    }
 };
 
-const ensureConnectAccount = async (user, stripe) => {
+const ensureConnectAccount = async (user, stripe, stripeMode = 'test') => {
     if (user.stripeConnectAccountId) {
-        return syncConnectAccount(user, stripe);
+        const existingState = await syncConnectAccount(user, stripe, stripeMode);
+        if (existingState.accountId) {
+            return existingState;
+        }
     }
 
     const account = await stripe.accounts.create({
@@ -66,6 +94,7 @@ module.exports = {
     CONNECT_COUNTRY,
     getConnectState,
     applyConnectAccountSnapshot,
+    resetConnectState,
     syncConnectAccount,
     ensureConnectAccount,
 };

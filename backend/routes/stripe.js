@@ -9,7 +9,7 @@ const Payment = require('../models/Payment');
 const WebhookEvent = require('../models/WebhookEvent');
 const { createAndEmitNotification } = require('../utils/notify');
 const { normalizeRole } = require('../utils/accessControl');
-const { getStripeClient, isStripeConfigured } = require('../utils/stripeClient');
+const { getStripeClient, getStripeMode, isStripeConfigured } = require('../utils/stripeClient');
 const {
     getConnectState,
     applyConnectAccountSnapshot,
@@ -132,10 +132,27 @@ const isMockMode = () => {
     );
 };
 
+const getActiveStripeMode = () => getStripeMode();
+
+const resetBillingStateForMode = (user, stripeMode) => {
+    user.stripeCustomerId = null;
+    user.stripeSubscriptionId = null;
+    user.subscriptionActive = false;
+    user.subscriptionExpiresAt = null;
+    user.accessPassActive = false;
+    user.accessPassExpiresAt = null;
+    user.stripeEnv = stripeMode;
+};
+
 const ensureCustomer = async (user) => {
     const stripe = getStripeClient();
     if (!stripe) {
         throw new Error('Stripe non configure.');
+    }
+    const stripeMode = getActiveStripeMode();
+    if (user.stripeEnv && user.stripeEnv !== stripeMode) {
+        resetBillingStateForMode(user, stripeMode);
+        await user.save();
     }
     if (user.stripeCustomerId) {
         return user.stripeCustomerId;
@@ -145,6 +162,7 @@ const ensureCustomer = async (user) => {
         name: user.displayName || user.username,
     });
     user.stripeCustomerId = customer.id;
+    user.stripeEnv = stripeMode;
     await user.save();
     return customer.id;
 };
@@ -183,7 +201,7 @@ const getCreatorPayoutState = async (user, stripe) => {
     if (!user?.stripeConnectAccountId) {
         return getConnectState(user);
     }
-    return syncConnectAccount(user, stripe);
+    return syncConnectAccount(user, stripe, getActiveStripeMode());
 };
 
 const requireCreatorPayoutReady = async (creator, res) => {
@@ -238,7 +256,7 @@ router.post('/connect/account', auth, async (req, res) => {
         if (!assertCreatorRole(user, res)) return;
 
         const stripe = getStripeClient();
-        const payoutState = await ensureConnectAccount(user, stripe);
+        const payoutState = await ensureConnectAccount(user, stripe, getActiveStripeMode());
         return res.json(payoutState);
     } catch (error) {
         console.error('Stripe connect account error:', error);
@@ -253,7 +271,7 @@ router.post('/connect/onboarding', auth, async (req, res) => {
         if (!assertCreatorRole(user, res)) return;
 
         const stripe = getStripeClient();
-        const payoutState = await ensureConnectAccount(user, stripe);
+        const payoutState = await ensureConnectAccount(user, stripe, getActiveStripeMode());
         const accountLink = await stripe.accountLinks.create({
             account: user.stripeConnectAccountId,
             type: payoutState.detailsSubmitted ? 'account_update' : 'account_onboarding',
@@ -843,6 +861,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
                         subscription.current_period_end * 1000
                     );
                     user.stripeSubscriptionId = subscription.id;
+                    user.stripeEnv = subscription.livemode ? 'live' : 'test';
                     await user.save();
                     await upsertSubscription(user._id, {
                         stripeSubscriptionId: subscription.id,
@@ -960,6 +979,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
                     user.subscriptionExpiresAt = new Date(
                         subscription.current_period_end * 1000
                     );
+                    user.stripeEnv = subscription.livemode ? 'live' : 'test';
                     await user.save();
                     await upsertSubscription(user._id, {
                         stripeSubscriptionId: subscription.id,
@@ -1002,6 +1022,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
             if (user) {
                 user.subscriptionActive = false;
                 user.subscriptionExpiresAt = null;
+                user.stripeEnv = subscription.livemode ? 'live' : 'test';
                 await user.save();
                 await upsertSubscription(user._id, {
                     stripeSubscriptionId: subscription.id,
@@ -1036,6 +1057,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
                 user.subscriptionExpiresAt = subscription.current_period_end
                     ? new Date(subscription.current_period_end * 1000)
                     : null;
+                user.stripeEnv = subscription.livemode ? 'live' : 'test';
                 await user.save();
                 await upsertSubscription(user._id, {
                     stripeSubscriptionId: subscription.id,
@@ -1060,6 +1082,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
             });
             if (user) {
                 applyConnectAccountSnapshot(user, account);
+                user.stripeConnectEnv = account.livemode ? 'live' : 'test';
                 await user.save();
             }
         }
