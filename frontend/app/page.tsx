@@ -302,7 +302,7 @@ export default function Home() {
                         )}
                     </div>
 
-                    <div className="glass rounded-3xl p-6 space-y-5">
+                    <div className="glass rounded-3xl p-6 space-y-5 lg:sticky lg:top-24">
                         <div className="flex items-center gap-4">
                             <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] flex items-center justify-center text-lg font-semibold overflow-hidden">
                                 {selectedCreator?.avatarUrl ? (
@@ -332,7 +332,7 @@ export default function Home() {
                             onClick={() => {
                                 if (canOpenPreview) setPreviewOpen(true);
                             }}
-                            className={`relative aspect-square w-full max-w-sm rounded-3xl bg-white/5 border border-white/5 overflow-hidden ${
+                            className={`relative aspect-square w-full max-w-[17rem] rounded-3xl bg-white/5 border border-white/5 overflow-hidden ${
                                 canOpenPreview ? 'cursor-zoom-in' : 'cursor-default'
                             } mx-auto`}
                         >
@@ -421,10 +421,10 @@ export default function Home() {
             {previewOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
                     <div
-                        className="absolute inset-0 bg-black/70"
+                        className="modal-backdrop absolute inset-0 bg-black/70"
                         onClick={() => setPreviewOpen(false)}
                     />
-                    <div className="relative z-10 w-full max-w-4xl">
+                    <div className="modal-panel relative z-10 w-full max-w-4xl">
                         <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">

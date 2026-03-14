@@ -67,7 +67,8 @@ export default function CreatorProfilePage({
     const [reportOpen, setReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [reportDetails, setReportDetails] = useState('');
-    const [activePreviewId, setActivePreviewId] = useState<string | null>(null);
+    const [selectedPreviewId, setSelectedPreviewId] = useState<string | null>(null);
+    const [previewOpen, setPreviewOpen] = useState(false);
     const autoChatTriggeredRef = useRef(false);
 
     useEffect(() => {
@@ -330,12 +331,12 @@ export default function CreatorProfilePage({
 
     const visibleContents =
         hasFullAccess || showAllGallery ? creator.contents : creator.contents.slice(0, 1);
-    const activePreview =
-        visibleContents.find((item) => item.id === activePreviewId) || null;
-    const activePreviewUrl = resolveMediaUrl(activePreview?.previewUrl || null);
-    const activePreviewIsVideo = activePreview ? isVideoPreview(activePreview) : false;
-    const activePreviewLimited =
-        Boolean(activePreview && activePreviewIsVideo && activePreview.isPreview && !hasFullAccess);
+    const stickyPreview =
+        visibleContents.find((item) => item.id === selectedPreviewId) || visibleContents[0] || null;
+    const stickyPreviewUrl = resolveMediaUrl(stickyPreview?.previewUrl || null);
+    const stickyPreviewIsVideo = stickyPreview ? isVideoPreview(stickyPreview) : false;
+    const stickyPreviewLimited =
+        Boolean(stickyPreview && stickyPreviewIsVideo && stickyPreview.isPreview && !hasFullAccess);
 
     return (
         <div className="min-h-screen">
@@ -413,7 +414,7 @@ export default function CreatorProfilePage({
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-[1.25fr,0.75fr] gap-8">
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-semibold text-[#f4ede3]">
@@ -424,9 +425,9 @@ export default function CreatorProfilePage({
                             </span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                             {visibleContents.length === 0 && (
-                                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-[#b7ad9c]">
+                                <div className="col-span-full rounded-2xl border border-white/10 bg-white/5 p-6 text-[#b7ad9c]">
                                     {t('creatorProfile.noContent')}
                                 </div>
                             )}
@@ -442,7 +443,11 @@ export default function CreatorProfilePage({
                                     >
                                         <button
                                             type="button"
-                                            onClick={() => mediaUrl && setActivePreviewId(item.id)}
+                                            onClick={() => {
+                                                if (!mediaUrl) return;
+                                                setSelectedPreviewId(item.id);
+                                                setPreviewOpen(true);
+                                            }}
                                             className={`relative aspect-square w-full bg-gradient-to-br from-[#1b1622] to-[#2a2018] ${
                                                 mediaUrl ? 'cursor-zoom-in' : 'cursor-default'
                                             }`}
@@ -559,7 +564,76 @@ export default function CreatorProfilePage({
                         </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-6 lg:sticky lg:top-24 self-start">
+                        <div className="rounded-3xl bg-white/5 p-5 shadow-lg border border-white/5 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-[#f4ede3]">
+                                    {stickyPreview?.title || t('creatorProfile.preview')}
+                                </h3>
+                                {stickyPreviewUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPreviewOpen(true)}
+                                        className="rounded-full border border-[#3a2c1a] px-3 py-1 text-xs font-semibold text-[#f0d8ac]"
+                                    >
+                                        {t('home.enlarge')}
+                                    </button>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => stickyPreviewUrl && setPreviewOpen(true)}
+                                className={`relative aspect-square w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#1b1622] to-[#2a2018] ${
+                                    stickyPreviewUrl ? 'cursor-zoom-in' : 'cursor-default'
+                                }`}
+                            >
+                                {stickyPreviewUrl ? (
+                                    stickyPreviewIsVideo ? (
+                                        <video
+                                            src={stickyPreviewUrl}
+                                            muted
+                                            playsInline
+                                            loop
+                                            disablePictureInPicture
+                                            onContextMenu={(event) => event.preventDefault()}
+                                            onTimeUpdate={(event) => {
+                                                if (
+                                                    stickyPreviewLimited &&
+                                                    event.currentTarget.currentTime >
+                                                        PREVIEW_SECONDS
+                                                ) {
+                                                    event.currentTarget.pause();
+                                                    event.currentTarget.currentTime = 0;
+                                                }
+                                            }}
+                                            className={`h-full w-full object-cover ${
+                                                stickyPreview && !stickyPreview.unlocked
+                                                    ? 'blur-md'
+                                                    : ''
+                                            }`}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={stickyPreviewUrl}
+                                            alt={stickyPreview?.title || t('creatorProfile.preview')}
+                                            className={`h-full w-full object-cover ${
+                                                stickyPreview && !stickyPreview.unlocked
+                                                    ? 'blur-md'
+                                                    : ''
+                                            }`}
+                                        />
+                                    )
+                                ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-sm text-[#b7ad9c]">
+                                        {t('creatorProfile.previewFallback')}
+                                    </div>
+                                )}
+                                {stickyPreviewIsVideo && <WatermarkOverlay />}
+                            </button>
+                            {stickyPreview?.description && (
+                                <p className="text-sm text-[#b7ad9c]">{stickyPreview.description}</p>
+                            )}
+                        </div>
                         <div className="rounded-3xl bg-white/5 p-6 shadow-lg border border-white/5 space-y-4">
                             <h3 className="text-lg font-semibold text-[#f4ede3]">
                                 {t('creatorProfile.customRequest')}
@@ -659,30 +733,30 @@ export default function CreatorProfilePage({
                     </div>
                 </div>
             </div>
-            {activePreview && (
+            {stickyPreview && previewOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
                     <div
-                        className="absolute inset-0 bg-black/70"
-                        onClick={() => setActivePreviewId(null)}
+                        className="modal-backdrop absolute inset-0 bg-black/70"
+                        onClick={() => setPreviewOpen(false)}
                     />
-                    <div className="relative z-10 w-full max-w-4xl">
+                    <div className="modal-panel relative z-10 w-full max-w-4xl">
                         <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
-                                    {activePreview.title}
+                                    {stickyPreview.title}
                                 </p>
                                 <button
-                                    onClick={() => setActivePreviewId(null)}
+                                    onClick={() => setPreviewOpen(false)}
                                     className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8]"
                                 >
                                     {t('common.close')}
                                 </button>
                             </div>
                             <div className="aspect-video rounded-2xl bg-black/40 overflow-hidden border border-white/10 relative">
-                                {activePreviewUrl ? (
-                                    activePreviewIsVideo ? (
+                                {stickyPreviewUrl ? (
+                                    stickyPreviewIsVideo ? (
                                         <video
-                                            src={activePreviewUrl}
+                                            src={stickyPreviewUrl}
                                             controls
                                             muted
                                             playsInline
@@ -691,7 +765,7 @@ export default function CreatorProfilePage({
                                             onContextMenu={(event) => event.preventDefault()}
                                             onTimeUpdate={(event) => {
                                                 if (
-                                                    activePreviewLimited &&
+                                                    stickyPreviewLimited &&
                                                     event.currentTarget.currentTime >
                                                         PREVIEW_SECONDS
                                                 ) {
@@ -700,15 +774,15 @@ export default function CreatorProfilePage({
                                                 }
                                             }}
                                             className={`h-full w-full object-contain ${
-                                                !activePreview.unlocked ? 'blur-md' : ''
+                                                !stickyPreview.unlocked ? 'blur-md' : ''
                                             }`}
                                         />
                                     ) : (
                                         <img
-                                            src={activePreviewUrl}
-                                            alt={activePreview.title}
+                                            src={stickyPreviewUrl}
+                                            alt={stickyPreview.title}
                                             className={`h-full w-full object-contain ${
-                                                !activePreview.unlocked ? 'blur-md' : ''
+                                                !stickyPreview.unlocked ? 'blur-md' : ''
                                             }`}
                                         />
                                     )
@@ -717,7 +791,7 @@ export default function CreatorProfilePage({
                                         {t('creatorProfile.previewFallback')}
                                     </div>
                                 )}
-                                {activePreviewIsVideo && <WatermarkOverlay />}
+                                {stickyPreviewIsVideo && <WatermarkOverlay />}
                             </div>
                         </div>
                     </div>

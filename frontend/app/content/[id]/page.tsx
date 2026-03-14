@@ -143,6 +143,7 @@ export default function ContentPage({
     const [reportOpen, setReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [reportDetails, setReportDetails] = useState('');
+    const [selectedFileIndex, setSelectedFileIndex] = useState(0);
     const [activeFileIndex, setActiveFileIndex] = useState<number | null>(null);
 
     const token = getAuthToken();
@@ -313,6 +314,10 @@ export default function ContentPage({
     }
 
     const price = content.files?.[0]?.price;
+    const stickyFile = content.files[selectedFileIndex] || content.files[0] || null;
+    const stickyFileUrl = stickyFile ? resolveMediaUrl(stickyFile.url) : null;
+    const stickyFilePreviewLimited =
+        Boolean(stickyFile && content.isPreview && !content.canAccess && selectedFileIndex === 0);
     const activeFile =
         activeFileIndex !== null ? content.files[activeFileIndex] || null : null;
     const activeFileUrl = activeFile ? resolveMediaUrl(activeFile.url) : null;
@@ -357,9 +362,9 @@ export default function ContentPage({
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-[1.25fr,0.75fr] gap-8">
                     <div className="space-y-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                             {content.files.map((file, index) => {
                                 const mediaUrl = resolveMediaUrl(file.url);
                                 const limitPreview =
@@ -371,7 +376,11 @@ export default function ContentPage({
                                     >
                                         <button
                                             type="button"
-                                            onClick={() => mediaUrl && setActiveFileIndex(index)}
+                                            onClick={() => {
+                                                if (!mediaUrl) return;
+                                                setSelectedFileIndex(index);
+                                                setActiveFileIndex(index);
+                                            }}
                                             className={`relative aspect-square w-full bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center ${
                                                 mediaUrl ? 'cursor-zoom-in' : 'cursor-default'
                                             }`}
@@ -489,7 +498,73 @@ export default function ContentPage({
                         </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 lg:sticky lg:top-24 self-start">
+                        <div className="rounded-3xl bg-white/5 p-5 shadow-lg space-y-4 border border-white/5">
+                            <div className="flex items-center justify-between gap-3">
+                                <h2 className="text-lg font-semibold text-[#f4ede3]">
+                                    {content.title}
+                                </h2>
+                                {stickyFileUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveFileIndex(selectedFileIndex)}
+                                        className="rounded-full border border-[#3a2c1a] px-3 py-1 text-xs font-semibold text-[#f0d8ac]"
+                                    >
+                                        {locale === 'fr' ? 'Agrandir' : 'Enlarge'}
+                                    </button>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => stickyFileUrl && setActiveFileIndex(selectedFileIndex)}
+                                className={`relative aspect-square w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#1b1622] to-[#2a2018] ${
+                                    stickyFileUrl ? 'cursor-zoom-in' : 'cursor-default'
+                                }`}
+                            >
+                                {!stickyFileUrl ? (
+                                    <div className="flex h-full w-full items-center justify-center text-sm text-[#b7ad9c]">
+                                        {copy.previewUnavailable}
+                                    </div>
+                                ) : stickyFile?.type.startsWith('video') ? (
+                                    <video
+                                        src={stickyFileUrl}
+                                        muted
+                                        playsInline
+                                        loop
+                                        disablePictureInPicture
+                                        onContextMenu={(event) => event.preventDefault()}
+                                        onTimeUpdate={(event) => {
+                                            if (
+                                                stickyFilePreviewLimited &&
+                                                event.currentTarget.currentTime > PREVIEW_SECONDS
+                                            ) {
+                                                event.currentTarget.pause();
+                                                event.currentTarget.currentTime = 0;
+                                            }
+                                        }}
+                                        className={`h-full w-full object-cover ${
+                                            stickyFile.isLocked ? 'blur-md' : ''
+                                        }`}
+                                    />
+                                ) : (
+                                    <img
+                                        src={stickyFileUrl}
+                                        alt={content.title}
+                                        className={`h-full w-full object-cover ${
+                                            stickyFile?.isLocked ? 'blur-md' : ''
+                                        }`}
+                                    />
+                                )}
+                                {stickyFile?.type.startsWith('video') && <WatermarkOverlay />}
+                                {stickyFile?.isLocked && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                        <span className="rounded-full bg-[#15131b] px-4 py-2 text-sm font-semibold text-[#f0d8ac] border border-white/10">
+                                            {copy.unlockToView}
+                                        </span>
+                                    </div>
+                                )}
+                            </button>
+                        </div>
                         <div className="rounded-3xl bg-white/5 p-6 shadow-lg space-y-4 border border-white/5">
                             <h2 className="text-xl font-semibold text-[#f4ede3]">
                                 {copy.unlockAccess}
@@ -551,10 +626,10 @@ export default function ContentPage({
             {activeFile && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
                     <div
-                        className="absolute inset-0 bg-black/70"
+                        className="modal-backdrop absolute inset-0 bg-black/70"
                         onClick={() => setActiveFileIndex(null)}
                     />
-                    <div className="relative z-10 w-full max-w-4xl">
+                    <div className="modal-panel relative z-10 w-full max-w-4xl">
                         <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">

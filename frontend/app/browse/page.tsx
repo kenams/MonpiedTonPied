@@ -270,7 +270,7 @@ export default function BrowsePage() {
                         {copy.empty}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {content.map((item, index) => {
                             const imageUrl = resolveMediaUrl(item.previewUrl);
                             const hasImage = imageUrl && !imageUrl.includes('placeholder-image');
@@ -381,10 +381,10 @@ export default function BrowsePage() {
             {activeIndex !== null && content[activeIndex] && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
                     <div
-                        className="absolute inset-0 bg-black/70"
+                        className="modal-backdrop absolute inset-0 bg-black/70"
                         onClick={() => setActiveIndex(null)}
                     />
-                    <div className="relative z-10 w-full max-w-4xl">
+                    <div className="modal-panel relative z-10 w-full max-w-4xl">
                         <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">

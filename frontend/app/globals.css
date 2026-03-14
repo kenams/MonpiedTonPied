@@ -68,3 +68,31 @@ h4 {
     background: rgba(199, 164, 106, 0.35);
     color: #0b0a0f;
 }
+
+@keyframes modal-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modal-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-backdrop {
+    animation: modal-fade-in 180ms ease-out;
+}
+
+.modal-panel {
+    animation: modal-panel-in 220ms ease-out;
+}
