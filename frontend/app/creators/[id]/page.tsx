@@ -301,7 +301,6 @@ export default function CreatorProfilePage({
     };
 
     const hasFullAccess = Boolean(viewer?.subscriptionActive || viewer?.accessPassActive);
-    const showAllGallery = process.env.NEXT_PUBLIC_SHOW_ALL_GALLERY === 'true';
 
     if (!creator) {
         return (
@@ -329,8 +328,7 @@ export default function CreatorProfilePage({
         );
     }
 
-    const visibleContents =
-        hasFullAccess || showAllGallery ? creator.contents : creator.contents.slice(0, 1);
+    const visibleContents = creator.contents;
     const stickyPreview =
         visibleContents.find((item) => item.id === selectedPreviewId) || visibleContents[0] || null;
     const stickyPreviewUrl = resolveMediaUrl(stickyPreview?.previewUrl || null);
@@ -521,7 +519,7 @@ export default function CreatorProfilePage({
                                                         {t('creatorProfile.locked')}
                                                     </span>
                                                     <p className="max-w-[15rem] text-xs leading-5 text-[#d6cbb8]">
-                                                        {t('creatorProfile.subscribeToUnlock')}
+                                                        {t('creatorProfile.buyOrSubscribe')}
                                                     </p>
                                                 </div>
                                             )}
@@ -556,14 +554,27 @@ export default function CreatorProfilePage({
                             })}
                         </div>
 
-                        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
+                        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center space-y-4">
                             {!token ? (
-                                <Link
-                                    href={`/auth/login?redirect=/creators/${id}`}
-                                    className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
-                                >
-                                    {t('creatorProfile.loginToUnlock')}
-                                </Link>
+                                <>
+                                    <p className="text-sm text-[#b7ad9c]">
+                                        {t('creatorProfile.loginToUnlockGallery')}
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <Link
+                                            href={`/auth/login?redirect=/creators/${id}`}
+                                            className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
+                                        >
+                                            {t('creatorProfile.loginToUnlock')}
+                                        </Link>
+                                        <Link
+                                            href="/auth/register"
+                                            className="inline-flex w-full items-center justify-center rounded-full border border-white/15 px-6 py-4 text-base font-semibold text-[#d6cbb8]"
+                                        >
+                                            {t('nav.signup')}
+                                        </Link>
+                                    </div>
+                                </>
                             ) : viewer?.subscriptionActive ? (
                                 <button
                                     onClick={handleChat}
@@ -572,12 +583,28 @@ export default function CreatorProfilePage({
                                     {t('creatorProfile.openChat')}
                                 </button>
                             ) : (
-                                <button
-                                    onClick={handleSubscribe}
-                                    className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
-                                >
-                                    {t('creatorProfile.subscribeToUnlock')}
-                                </button>
+                                <>
+                                    <p className="text-sm text-[#b7ad9c]">
+                                        {t('creatorProfile.buyOrSubscribeHint')}
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <button
+                                            onClick={handleSubscribe}
+                                            className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] px-6 py-4 text-base font-semibold text-[#0b0a0f] shadow-lg"
+                                        >
+                                            {t('creatorProfile.subscribeToUnlock')}
+                                        </button>
+                                        <button
+                                            onClick={handlePass}
+                                            className="inline-flex w-full items-center justify-center rounded-full border border-[#3a2c1a] px-6 py-4 text-base font-semibold text-[#f0d8ac]"
+                                        >
+                                            {t('creatorProfile.activatePass')}
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-[#b7ad9c]">
+                                        {t('creatorProfile.buyPerVideoHint')}
+                                    </p>
+                                </>
                             )}
                         </div>
                     </div>

@@ -145,7 +145,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
             previewLine: 'Apercu 10s',
             contentSheet: 'Voir la fiche ->',
             loginToUnlock: 'Se connecter pour debloquer',
+            loginToUnlockGallery:
+                'La galerie complete est visible ici mais verrouillee. Connecte-toi puis achete a l’unite ou prends un abonnement/pass pour debloquer.',
             subscribeToUnlock: "S'abonner pour debloquer",
+            buyOrSubscribe:
+                'Inscription requise, puis achat a l’unite ou abonnement pour voir la video.',
+            buyOrSubscribeHint:
+                'Choisis un abonnement/pass pour debloquer toute la galerie. Pour un achat a l’unite, ouvre la fiche d’une video.',
+            buyPerVideoHint:
+                'Chaque fiche video permet aussi un achat a l’unite si tu ne veux pas prendre d’abonnement.',
             customRequest: 'Demande personnalisee',
             customRequestBody:
                 'Decris ta demande (pieds uniquement). Le creator a 48h pour repondre.',
@@ -586,7 +594,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
             previewLine: '10s preview',
             contentSheet: 'View details ->',
             loginToUnlock: 'Log in to unlock',
+            loginToUnlockGallery:
+                'The full gallery is shown here but stays locked. Log in, then buy per video or subscribe/pass to unlock.',
             subscribeToUnlock: 'Subscribe to unlock',
+            buyOrSubscribe:
+                'Sign-up required, then purchase per video or subscribe to watch.',
+            buyOrSubscribeHint:
+                'Choose a subscription/pass to unlock the full gallery. For one-off access, open a video detail page.',
+            buyPerVideoHint:
+                'Each video detail page also supports one-off purchase if you do not want a subscription.',
             customRequest: 'Custom request',
             customRequestBody:
                 'Describe your request (feet only). The creator has 48 hours to reply.',
