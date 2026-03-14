@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -32,6 +32,17 @@ type ContentItem = {
     };
 };
 
+type CreatorBrowseCard = {
+    creatorId: string;
+    creatorName: string;
+    creatorAvatarUrl?: string;
+    title: string;
+    description: string;
+    previewUrl?: string | null;
+    isPreview?: boolean;
+    unlocked?: boolean;
+};
+
 const filters = {
     fr: [
         { label: 'Tout', hint: 'Tout le feed' },
@@ -55,80 +66,67 @@ export default function BrowsePage() {
         locale === 'fr'
             ? {
                   loadError: 'Impossible de charger le contenu pour le moment.',
+                  creatorsOnly: 'Un seul apercu par modele',
                   eyebrow: 'Feed premium',
-                  title: 'Decouvre les collections du moment.',
+                  title: 'Decouvre les profils du moment.',
                   subtitle:
-                      'Selection sobre, contenus verifies et acces direct aux createurs les plus demandes.',
+                      'Une miniature par modele en vitrine. Pour voir la galerie complete floutee et debloquer le contenu, ouvre le profil du modele.',
                   premiumAccess: 'Acces premium',
                   premiumLine: '1 photo ou 10s de video gratuits par createur.',
                   premiumPrice: 'Pass 5.99 EUR (30 jours) ou abonnement 11.99 EUR.',
                   createAccount: 'Creer un compte',
                   login: 'Se connecter',
                   collectionMode: 'Mode collection',
-                  collectionTitle: 'Une interface sobre, un contenu exigeant.',
+                  collectionTitle: 'Une vitrine simple, un tunnel clair.',
                   collectionBody:
-                      'Chaque creator est verifie. Les previews restent delicats, les collections completes sont reservees aux membres.',
+                      'La page liste montre seulement une miniature par modele. Le profil centralise ensuite la galerie floutee, le paywall et les demandes de videos personnalisees.',
                   privacy: 'Confidentialite',
                   moderation: 'Moderation',
                   securePayments: 'Paiements securises',
                   retry: 'Reessayer',
-                  empty: 'Aucun contenu disponible pour le moment.',
+                  empty: 'Aucun modele disponible pour le moment.',
                   preview: 'Preview',
-                  blurred: 'Floute',
                   freePreview: 'Preview gratuite',
-                  locked: 'Verrouille',
-                  accessible: 'Accessible',
-                  views: 'vues',
-                  likes: 'likes',
-                  viewContent: 'Voir le contenu',
-                  unlock: 'Debloquer',
+                  openProfile: 'Voir le profil',
+                  requestInfo: 'Demandes personnalisees dispo sur le profil',
                   ctaTitle: 'Accede aux collections completes.',
                   ctaSubtitle:
                       "Le pass ou l'abonnement debloquent les series premium et le chat.",
                   ctaPrimary: 'Voir les offres',
-                  enlarge: 'Agrandir',
-                  close: 'Fermer',
               }
             : {
                   loadError: 'Unable to load content right now.',
+                  creatorsOnly: 'One preview per model',
                   eyebrow: 'Premium feed',
-                  title: 'Discover current collections.',
+                  title: 'Discover the featured profiles.',
                   subtitle:
-                      'Clean selection, verified content, and direct access to the most requested creators.',
+                      'One public thumbnail per model on the listing page. Open the profile to see the blurred full gallery and unlock premium access.',
                   premiumAccess: 'Premium access',
                   premiumLine: '1 free photo or 10 seconds of video per creator.',
                   premiumPrice: '5.99 EUR pass (30 days) or 11.99 EUR subscription.',
                   createAccount: 'Create account',
                   login: 'Log in',
                   collectionMode: 'Collection mode',
-                  collectionTitle: 'A clean interface, demanding content.',
+                  collectionTitle: 'Simple storefront, clear funnel.',
                   collectionBody:
-                      'Each creator is verified. Previews stay limited, full collections are reserved for members.',
+                      'The listing page only shows one thumbnail per model. The profile then centralizes the blurred gallery, paywall, and custom video requests.',
                   privacy: 'Privacy',
                   moderation: 'Moderation',
                   securePayments: 'Secure payments',
                   retry: 'Retry',
-                  empty: 'No content available right now.',
+                  empty: 'No model available right now.',
                   preview: 'Preview',
-                  blurred: 'Blurred',
                   freePreview: 'Free preview',
-                  locked: 'Locked',
-                  accessible: 'Accessible',
-                  views: 'views',
-                  likes: 'likes',
-                  viewContent: 'View content',
-                  unlock: 'Unlock',
+                  openProfile: 'Open profile',
+                  requestInfo: 'Custom requests available on the profile',
                   ctaTitle: 'Unlock full collections.',
                   ctaSubtitle:
                       'The pass or subscription unlocks premium series and chat.',
                   ctaPrimary: 'View offers',
-                  enlarge: 'Enlarge',
-                  close: 'Close',
               };
     const [content, setContent] = useState<ContentItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     const fetchContent = useCallback(async () => {
         setLoading(true);
@@ -157,6 +155,29 @@ export default function BrowsePage() {
     useEffect(() => {
         fetchContent();
     }, [fetchContent]);
+
+    const creatorCards = useMemo<CreatorBrowseCard[]>(() => {
+        const seen = new Set<string>();
+        const cards: CreatorBrowseCard[] = [];
+
+        for (const item of content) {
+            const creatorId = item.creator.id;
+            if (!creatorId || seen.has(creatorId)) continue;
+            seen.add(creatorId);
+            cards.push({
+                creatorId,
+                creatorName: item.creator.displayName || item.creator.username,
+                creatorAvatarUrl: item.creator.avatarUrl,
+                title: item.title,
+                description: item.description,
+                previewUrl: item.previewUrl,
+                isPreview: item.isPreview,
+                unlocked: item.unlocked,
+            });
+        }
+
+        return cards;
+    }, [content]);
 
     if (loading) {
         return (
@@ -199,6 +220,9 @@ export default function BrowsePage() {
                 <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
                     <div className="glass rounded-3xl p-8 space-y-5">
                         <div className="flex flex-wrap items-center gap-3">
+                            <span className="rounded-full border border-[#3a2c1a] bg-[#1b1510] px-4 py-2 text-xs font-semibold text-[#f0d8ac]">
+                                {copy.creatorsOnly}
+                            </span>
                             {filters[locale].map((filter) => (
                                 <button
                                     key={filter.label}
@@ -265,30 +289,23 @@ export default function BrowsePage() {
                     </div>
                 )}
 
-                {content.length === 0 ? (
+                {creatorCards.length === 0 ? (
                     <div className="rounded-3xl border border-dashed border-white/15 bg-white/5 p-10 text-center text-[#b7ad9c]">
                         {copy.empty}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                        {content.map((item, index) => {
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {creatorCards.map((item) => {
                             const imageUrl = resolveMediaUrl(item.previewUrl);
                             const hasImage = imageUrl && !imageUrl.includes('placeholder-image');
-                            const isVideo = /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(imageUrl);
-                            const isLocked = !item.unlocked;
+                            const isVideo = Boolean(imageUrl) && /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(imageUrl);
 
                             return (
                                 <div
-                                    key={item._id}
+                                    key={item.creatorId}
                                     className="rounded-3xl bg-white/5 shadow-lg overflow-hidden hover:shadow-2xl transition border border-white/5"
                                 >
-                                    <button
-                                        type="button"
-                                        onClick={() => hasImage && setActiveIndex(index)}
-                                        className={`relative aspect-square w-full bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center ${
-                                            hasImage ? 'cursor-zoom-in' : 'cursor-default'
-                                        }`}
-                                    >
+                                    <div className="relative aspect-square w-full bg-gradient-to-br from-[#1b1622] to-[#2a2018] flex items-center justify-center">
                                         {hasImage ? (
                                             isVideo ? (
                                                 <video
@@ -297,52 +314,34 @@ export default function BrowsePage() {
                                                     playsInline
                                                     disablePictureInPicture
                                                     onContextMenu={(event) => event.preventDefault()}
-                                                    className={`h-full w-full object-cover ${isLocked ? 'blur-md' : ''}`}
+                                                    className="h-full w-full object-cover"
                                                 />
                                             ) : (
                                                 <img
-                                                    src={imageUrl}
-                                                    alt={item.title}
-                                                    className={`h-full w-full object-cover ${isLocked ? 'blur-md' : ''}`}
+                                                    src={imageUrl || undefined}
+                                                    alt={item.creatorName}
+                                                    className="h-full w-full object-cover"
                                                     loading="lazy"
                                                 />
                                             )
                                         ) : (
                                             <div className="text-sm text-[#b7ad9c]">{copy.preview}</div>
                                         )}
-                                        {hasImage && (
-                                            <div className="absolute bottom-4 right-4 rounded-full bg-[#15131b] px-3 py-1 text-xs font-semibold text-[#f0d8ac] border border-white/10">
-                                                {copy.enlarge}
-                                            </div>
-                                        )}
                                         {isVideo && <WatermarkOverlay />}
-                                        {isLocked && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                                                <span className="rounded-full bg-[#15131b] px-4 py-2 text-xs font-semibold text-[#f0d8ac] border border-white/10">
-                                                    {copy.blurred}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </button>
+                                    </div>
                                     <div className="p-5 space-y-3">
-                                        <div className="flex items-center justify-between text-sm text-[#b7ad9c]">
-                                            {item.creator.id ? (
-                                                <Link
-                                                    href={`/creators/${item.creator.id}`}
-                                                    className="hover:text-[#f0d8ac]"
-                                                >
-                                                    {item.creator.displayName || item.creator.username}
-                                                </Link>
-                                            ) : (
-                                                <span>
-                                                    {item.creator.displayName || item.creator.username}
-                                                </span>
-                                            )}
-                                            {typeof item.price === 'number' && (
-                                                <span className="rounded-full bg-[#2a2218] px-3 py-1 text-[#f0d8ac] border border-[#3a2c1a]">
-                                                    {item.price} EUR
-                                                </span>
-                                            )}
+                                        <div className="flex items-center gap-3 text-sm text-[#b7ad9c]">
+                                            <div className="h-10 w-10 rounded-2xl overflow-hidden bg-[#15131b] border border-white/10">
+                                                {item.creatorAvatarUrl ? (
+                                                    <img
+                                                        src={item.creatorAvatarUrl}
+                                                        alt={item.creatorName}
+                                                        className="h-full w-full object-cover"
+                                                        loading="lazy"
+                                                    />
+                                                ) : null}
+                                            </div>
+                                            <span>{item.creatorName}</span>
                                         </div>
                                         {item.isPreview && (
                                             <span className="inline-flex rounded-full bg-[#1b1510] px-3 py-1 text-xs text-[#f0d8ac] border border-[#3a2c1a]">
@@ -350,20 +349,19 @@ export default function BrowsePage() {
                                             </span>
                                         )}
                                         <h3 className="text-lg font-semibold text-[#f4ede3]">
-                                            {item.title}
+                                            {item.creatorName}
                                         </h3>
                                         <p className="text-sm text-[#b7ad9c] line-clamp-2">
-                                            {item.description}
+                                            {item.description || item.title}
                                         </p>
-                                        <div className="flex items-center justify-between text-xs text-[#b7ad9c]">
-                                            <span>{item.stats.views} {copy.views}</span>
-                                            <span>{item.stats.likes} {copy.likes}</span>
-                                        </div>
+                                        <p className="text-xs text-[#b7ad9c]">
+                                            {copy.requestInfo}
+                                        </p>
                                         <Link
-                                            href={`/content/${item._id}`}
+                                            href={`/creators/${item.creatorId}`}
                                             className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#c7a46a] to-[#8f6b39] text-[#0b0a0f] py-2 text-sm font-semibold"
                                         >
-                                            {item.unlocked ? copy.viewContent : copy.unlock}
+                                            {copy.openProfile}
                                         </Link>
                                     </div>
                                 </div>
@@ -378,71 +376,6 @@ export default function BrowsePage() {
                     primaryHref="/offers"
                 />
             </div>
-            {activeIndex !== null && content[activeIndex] && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-                    <div
-                        className="modal-backdrop absolute inset-0 bg-black/70"
-                        onClick={() => setActiveIndex(null)}
-                    />
-                    <div className="modal-panel relative z-10 w-full max-w-4xl">
-                        <div className="glass rounded-3xl p-4 sm:p-6 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm uppercase tracking-[0.3em] text-[#d8c7a8]">
-                                    {content[activeIndex].title}
-                                </p>
-                                <button
-                                    onClick={() => setActiveIndex(null)}
-                                    className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#d6cbb8]"
-                                >
-                                    {copy.close}
-                                </button>
-                            </div>
-                            <div className="aspect-video rounded-2xl bg-black/40 overflow-hidden border border-white/10 relative">
-                                {(() => {
-                                    const item = content[activeIndex];
-                                    const imageUrl = resolveMediaUrl(item.previewUrl);
-                                    const isVideo =
-                                        Boolean(imageUrl) &&
-                                        /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(imageUrl);
-                                    const isLocked = !item.unlocked;
-
-                                    if (!imageUrl || imageUrl.includes('placeholder-image')) {
-                                        return (
-                                            <div className="h-full w-full flex items-center justify-center text-sm text-[#b7ad9c]">
-                                                {copy.preview}
-                                            </div>
-                                        );
-                                    }
-
-                                    return isVideo ? (
-                                        <>
-                                            <video
-                                                src={imageUrl}
-                                                controls={!isLocked}
-                                                controlsList="nodownload noplaybackrate noremoteplayback"
-                                                disablePictureInPicture
-                                                onContextMenu={(event) => event.preventDefault()}
-                                                className={`h-full w-full object-contain ${
-                                                    isLocked ? 'blur-md' : ''
-                                                }`}
-                                            />
-                                            <WatermarkOverlay />
-                                        </>
-                                    ) : (
-                                        <img
-                                            src={imageUrl}
-                                            alt={item.title}
-                                            className={`h-full w-full object-contain ${
-                                                isLocked ? 'blur-md' : ''
-                                            }`}
-                                        />
-                                    );
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
             <Footer />
         </div>
     );
