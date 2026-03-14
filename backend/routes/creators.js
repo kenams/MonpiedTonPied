@@ -115,9 +115,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
             };
         });
 
-        const visibleContents = canAccess
-            ? mappedContents
-            : mappedContents.slice(0, PREVIEW_LIMIT);
+        const visibleContents = mappedContents;
 
         return res.json({
             id: creator._id,
