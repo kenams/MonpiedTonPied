@@ -53,7 +53,14 @@ const syncConnectAccount = async (user, stripe, stripeMode = 'test') => {
         await user.save();
         return state;
     } catch (error) {
-        if (error?.type === 'StripeInvalidRequestError' || error?.statusCode === 404) {
+        const shouldResetInvalidAccount =
+            error?.type === 'StripeInvalidRequestError' ||
+            error?.type === 'StripePermissionError' ||
+            error?.statusCode === 404 ||
+            error?.statusCode === 403 ||
+            error?.code === 'account_invalid';
+
+        if (shouldResetInvalidAccount) {
             const state = resetConnectState(user);
             await user.save();
             return state;
