@@ -3,7 +3,18 @@ import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createNativeStackNavigator, type NativeStackScreenProps } from "@react-navigation/native-stack";
+
+type FeedStackParamList = {
+  FeedList: undefined;
+  ContentDetail: { id: string };
+};
+
+type CreatorStackParamList = {
+  CreatorsList: undefined;
+  CreatorDetail: { id: string };
+  ContentDetail: { id: string };
+};
 import {
   Alert,
   SafeAreaView,
@@ -37,8 +48,8 @@ const API_BASE = resolveApiBase();
 const TOKEN_KEY = "mptp_token";
 
 const Tab = createBottomTabNavigator();
-const FeedStack = createNativeStackNavigator();
-const CreatorStack = createNativeStackNavigator();
+const FeedStack = createNativeStackNavigator<FeedStackParamList>();
+const CreatorStack = createNativeStackNavigator<CreatorStackParamList>();
 const ProfileStack = createNativeStackNavigator();
 
 type ContentItem = {
@@ -97,7 +108,8 @@ type RequestItem = {
   consumer?: { displayName?: string };
 };
 
-const linking = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const linking: any = {
   prefixes: ["monpiedtonpied://", Linking.createURL("/")],
   config: {
     screens: {
@@ -350,7 +362,7 @@ function BrowseScreen({ navigation }: { navigation: any }) {
   );
 }
 
-function ContentDetailScreen({ route }: { route: { params: { id: string } } }) {
+function ContentDetailScreen({ route }: NativeStackScreenProps<FeedStackParamList, "ContentDetail">) {
   const { token } = useToken();
   const [content, setContent] = useState<ContentDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -519,10 +531,7 @@ function CreatorsScreen({ navigation }: { navigation: any }) {
 function CreatorDetailScreen({
   route,
   navigation,
-}: {
-  route: { params: { id: string } };
-  navigation: any;
-}) {
+}: NativeStackScreenProps<CreatorStackParamList, "CreatorDetail">) {
   const { token } = useToken();
   const [creator, setCreator] = useState<CreatorDetail | null>(null);
   const [prompt, setPrompt] = useState("");

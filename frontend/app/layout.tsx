@@ -1,49 +1,23 @@
-import type { Metadata } from 'next';
-import { Cormorant_Garamond, Source_Sans_3 } from 'next/font/google';
-import { LocaleProvider } from './components/LocaleProvider';
-import './globals.css';
-
-const displayFont = Cormorant_Garamond({
-    subsets: ['latin'],
-    variable: '--font-display',
-    weight: ['400', '500', '600', '700'],
-});
-
-const bodyFont = Source_Sans_3({
-    subsets: ['latin'],
-    variable: '--font-body',
-    weight: ['300', '400', '500', '600'],
-});
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
-    title: 'MonPiedTonPied',
-    description: 'Plateforme premium pour createurs et collectionneurs.',
-    openGraph: {
-        title: 'MonPiedTonPied',
-        description: 'Plateforme premium pour createurs et collectionneurs.',
-        type: 'website',
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'MonPiedTonPied',
-        description: 'Plateforme premium pour createurs et collectionneurs.',
-    },
+  title: "Arcane Feet — Galerie Premium",
+  description: "Une galerie exclusive. Accès illimité, HD, sans censure.",
+  robots: { index: false, follow: false },
 };
 
-export default function RootLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    return (
-        <html lang="fr" data-scroll-behavior="smooth">
-            <body
-                className={`${displayFont.variable} ${bodyFont.variable} font-sans`}
-                suppressHydrationWarning
-            >
-                <LocaleProvider>{children}</LocaleProvider>
-            </body>
-        </html>
-    );
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="fr">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body>
+        {children}
+      </body>
+    </html>
+  );
 }
