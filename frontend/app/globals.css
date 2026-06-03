@@ -28,8 +28,8 @@ body {
   height: 100dvh;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  margin: 0 auto;
 }
 
 .feed-item {
@@ -38,6 +38,7 @@ body {
   scroll-snap-stop: always;
   position: relative;
   overflow: hidden;
+  background: #111;
 }
 
 /* Blur paywall */
