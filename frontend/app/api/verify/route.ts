@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { createAccessToken } from "@/lib/access";
 import type { PlanKey } from "@/lib/stripe";
 
@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
   if (!session_id) return NextResponse.json({ valid: false });
 
   try {
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(session_id);
     if (session.payment_status !== "paid") return NextResponse.json({ valid: false });
 
