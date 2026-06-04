@@ -16,6 +16,11 @@ const contentSchema = new mongoose.Schema(
         description: { type: String, default: '' },
         creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         files: { type: [fileSchema], default: [] },
+        tags: { type: [String], default: [] },
+        category: { type: String, default: 'all' },
+        price: { type: Number, default: 0 },
+        isPublic: { type: Boolean, default: true },
+        likedBy: { type: [mongoose.Schema.Types.ObjectId], default: [] },
         stats: {
             views: { type: Number, default: 0 },
             likes: { type: Number, default: 0 },
@@ -23,5 +28,9 @@ const contentSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+contentSchema.index({ tags: 1 });
+contentSchema.index({ category: 1 });
+contentSchema.index({ creator: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Content', contentSchema);

@@ -66,5 +66,41 @@ router.get('/creator', auth, async (req, res) => {
     }
 });
 
+// Route /api/dashboard/stats — stats pour le dashboard frontend
+router.get('/stats', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: 'Introuvable.' });
+
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+
+        const contents = await Content.find({ creator: user._id });
+        const contentIds = contents.map(c => c._id);
+
+        const [allPurchases, monthPurchases] = await Promise.all([
+            contentIds.length ? Purchase.find({ content: { $in: contentIds } }) : [],
+            contentIds.length ? Purchase.find({ content: { $in: contentIds }, createdAt: { $gte: startOfMonth } }) : [],
+        ]);
+
+        const totalViews = contents.reduce((s, c) => s + (c.stats?.views || 0), 0);
+        const totalLikes = contents.reduce((s, c) => s + (c.stats?.likes || 0), 0);
+        const totalRevenue = allPurchases.reduce((s, p) => s + (p.creatorAmount || p.amount || 0), 0);
+        const thisMonthRevenue = monthPurchases.reduce((s, p) => s + (p.creatorAmount || p.amount || 0), 0);
+
+        return res.json({
+            totalRevenue,
+            thisMonthRevenue,
+            totalViews,
+            totalLikes,
+            totalSubscribers: 0,
+            contentCount: contents.length,
+            pendingPayout: 0,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
 module.exports = router;
 const { normalizeRole } = require('../utils/accessControl');

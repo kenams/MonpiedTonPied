@@ -107,4 +107,37 @@ router.put('/me', auth, async (req, res) => {
     }
 });
 
+// Profil public par username
+router.get('/:username', async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username })
+            .select('username displayName avatarUrl bio verifiedCreator role createdAt');
+        if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+
+        const Content = require('../models/Content');
+        const [contents, totalLikes, totalViews] = await Promise.all([
+            Content.find({ creator: user._id }).countDocuments(),
+            Content.aggregate([{ $match: { creator: user._id } }, { $group: { _id: null, total: { $sum: '$stats.likes' } } }]),
+            Content.aggregate([{ $match: { creator: user._id } }, { $group: { _id: null, total: { $sum: '$stats.views' } } }]),
+        ]);
+
+        return res.json({
+            _id: user._id,
+            username: user.username,
+            displayName: user.displayName || user.username,
+            avatarUrl: user.avatarUrl || '/default-avatar.svg',
+            bio: user.bio || '',
+            verifiedCreator: user.verifiedCreator || false,
+            stats: {
+                totalContent: contents,
+                totalLikes: totalLikes[0]?.total || 0,
+                totalViews: totalViews[0]?.total || 0,
+                subscribers: 0,
+            },
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
 module.exports = router;

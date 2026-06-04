@@ -8,11 +8,13 @@ export type AccessPayload = {
 };
 
 export async function createAccessToken(type: "monthly" | "lifetime"): Promise<string> {
-  const exp = type === "monthly" ? Math.floor(Date.now() / 1000) + 30 * 24 * 3600 : undefined;
+  const exp = type === "monthly"
+    ? Math.floor(Date.now() / 1000) + 30 * 24 * 3600
+    : Math.floor(Date.now() / 1000) + 365 * 24 * 3600; // annual = 1 an
   const jwt = await new SignJWT({ type })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(exp ?? "100y")
+    .setExpirationTime(exp)
     .sign(SECRET);
   return jwt;
 }
@@ -26,4 +28,4 @@ export async function verifyAccessToken(token: string): Promise<AccessPayload | 
   }
 }
 
-export const FREE_LIMIT = 6;
+export const FREE_LIMIT = 3;

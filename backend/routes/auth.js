@@ -445,4 +445,35 @@ router.post('/email/verify', async (req, res) => {
     }
 });
 
+// GET /api/auth/me — retourne l'utilisateur connecté
+router.get('/me', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ message: 'Non authentifié.' });
+    try {
+        const token = authHeader.slice(7);
+        const payload = jwt.verify(token, JWT_SECRET);
+        const user = await User.findById(payload.id).select('-passwordHash');
+        if (!user || user.isSuspended) return res.status(401).json({ message: 'Non authentifié.' });
+        return res.json({
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                displayName: user.displayName || user.username,
+                avatarUrl: user.avatarUrl || '/default-avatar.svg',
+                role: user.role,
+                bio: user.bio,
+                verifiedCreator: user.verifiedCreator,
+                subscriptionActive: user.subscriptionActive,
+                accessPassActive: user.accessPassActive,
+                stripeConnectAccountId: user.stripeConnectAccountId,
+                stripeConnectChargesEnabled: user.stripeConnectChargesEnabled,
+                stripeConnectPayoutsEnabled: user.stripeConnectPayoutsEnabled,
+            },
+        });
+    } catch {
+        return res.status(401).json({ message: 'Token invalide.' });
+    }
+});
+
 module.exports = router;

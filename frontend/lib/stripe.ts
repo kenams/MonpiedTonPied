@@ -8,17 +8,17 @@ export function getStripe(): Stripe {
 
 export const PLANS = {
   monthly: {
-    label: "Accès Mensuel",
+    label: "Mensuel",
     price: 499,
     currency: "eur",
-    description: "30 jours d'accès illimité",
+    description: "30 jours · renouvellement auto",
     badge: "Populaire",
   },
-  lifetime: {
-    label: "Accès à Vie",
-    price: 2499,
+  annual: {
+    label: "Annuel",
+    price: 1999,
     currency: "eur",
-    description: "Accès permanent + demandes customs",
+    description: "12 mois · économise €39.89",
     badge: "Meilleur deal",
   },
 } as const;

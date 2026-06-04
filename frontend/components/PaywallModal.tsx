@@ -1,79 +1,98 @@
 "use client";
 import { useState } from "react";
-import { X, Zap, Infinity, Star, Lock } from "lucide-react";
-import type { PlanKey } from "@/lib/stripe";
+import { X, Zap, Crown, Lock, Check } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import AuthModal from "./AuthModal";
 
-const PLANS_UI = [
+const PLANS = [
   {
-    key: "monthly" as PlanKey,
+    key: "monthly",
     label: "Mensuel",
     price: "€4.99",
     period: "/mois",
     description: "Accès illimité 30 jours",
     icon: Zap,
     badge: "Populaire",
-    color: "from-[#c8907a] to-[#9d6552]",
+    color: "from-[var(--rose)] to-[var(--rose-dark)]",
   },
   {
-    key: "lifetime" as PlanKey,
-    label: "À Vie",
-    price: "€24.99",
-    period: " une fois",
-    description: "Accès permanent + customs",
-    icon: Infinity,
+    key: "annual",
+    label: "Annuel",
+    price: "€29.99",
+    period: "/an",
+    description: "Économise €29.89 · €2.50/mois",
+    icon: Crown,
     badge: "Meilleur deal",
     color: "from-[#a06a88] to-[#6d3d5a]",
   },
 ];
 
-export default function PaywallModal({ onClose }: { onClose: () => void }) {
-  const [loading, setLoading] = useState<PlanKey | null>(null);
+const FEATURES = [
+  "Accès illimité à tout le contenu",
+  "Qualité HD sans compression",
+  "Nouvelles publications quotidiennes",
+  "Messagerie avec les créateurs",
+  "Favoris & collections privées",
+  "Annulable à tout moment",
+];
 
-  async function checkout(plan: PlanKey) {
+export default function PaywallModal({ onClose }: { onClose: () => void }) {
+  const { user, token } = useAuth();
+  const [loading, setLoading] = useState<string | null>(null);
+  const [showAuth, setShowAuth] = useState(false);
+
+  async function checkout(plan: string) {
+    if (!user) { setShowAuth(true); return; }
     setLoading(plan);
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan }),
-    });
-    const { url } = await res.json();
-    if (url) window.location.href = url;
-    setLoading(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ plan }),
+      });
+      const { url } = await res.json();
+      if (url) window.location.href = url;
+    } catch { } finally { setLoading(null); }
   }
 
+  if (showAuth) return <AuthModal onClose={() => setShowAuth(false)} defaultTab="register" />;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
       <div className="absolute inset-0 modal-bg" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-[#111] border border-white/10 rounded-3xl p-6 fade-up">
-        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/50 hover:text-white transition">
+      <div className="relative w-full max-w-sm glass rounded-3xl p-6 fade-up">
+        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white transition">
           <X size={15} />
         </button>
 
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-[#c8907a]/15 border border-[#c8907a]/30 flex items-center justify-center mx-auto mb-3">
-            <Lock size={20} className="text-[#c8907a]" />
+        {/* Header */}
+        <div className="text-center mb-5">
+          <div className="w-12 h-12 rounded-full bg-[var(--rose)]/15 border border-[var(--rose)]/30 flex items-center justify-center mx-auto mb-3">
+            <Lock size={20} className="text-[var(--rose)]" />
           </div>
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>
-            Accès illimité
+            Accès Premium
           </h2>
           <p className="text-sm text-white/50 mt-1">
-            Galerie complète · HD · Nouvelles photos chaque jour
+            Débloquez tout le contenu des créateurs
           </p>
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-3 gap-2 mb-6">
-          {["Illimité", "Haute Def", "Exclusif"].map((f) => (
-            <div key={f} className="bg-white/5 rounded-xl p-2 text-center">
-              <Star size={12} className="text-[#c8907a] mx-auto mb-1" />
-              <p className="text-xs text-white/70">{f}</p>
+        <div className="mb-5 space-y-2">
+          {FEATURES.map(f => (
+            <div key={f} className="flex items-center gap-2.5">
+              <div className="w-4 h-4 rounded-full bg-[var(--rose)]/20 flex items-center justify-center flex-shrink-0">
+                <Check size={10} className="text-[var(--rose)]" />
+              </div>
+              <span className="text-sm text-white/70">{f}</span>
             </div>
           ))}
         </div>
 
         {/* Plans */}
         <div className="flex flex-col gap-3">
-          {PLANS_UI.map((plan) => (
+          {PLANS.map(plan => (
             <button
               key={plan.key}
               onClick={() => checkout(plan.key)}

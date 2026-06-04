@@ -45,10 +45,18 @@ router.get('/', optionalAuth, async (req, res) => {
         const currentUser = req.currentUser || (req.user ? await User.findById(req.user.id) : null);
         const canAccessAll = hasPremiumAccess(currentUser);
 
-        const items = await Content.find()
+        const filter = {};
+        if (req.query.mine === 'true' && currentUser) {
+            filter.creator = currentUser._id;
+        } else if (req.query.creator) {
+            const c = await User.findOne({ username: req.query.creator });
+            if (c) filter.creator = c._id;
+        }
+
+        const items = await Content.find(filter)
             .sort({ createdAt: -1 })
             .limit(200)
-            .populate('creator', 'username displayName avatarUrl role');
+            .populate('creator', 'username displayName avatarUrl role verifiedCreator');
 
         const purchases = currentUser
             ? await Purchase.find({
@@ -160,30 +168,130 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
 });
 
+// Feed paginated avec catégorie et tags
+router.get('/feed', optionalAuth, async (req, res) => {
+    try {
+        const currentUser = req.currentUser || (req.user ? await User.findById(req.user.id) : null);
+        const canAccessAll = hasPremiumAccess(currentUser);
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(20, parseInt(req.query.limit) || 10);
+        const skip = (page - 1) * limit;
+        const { category, tag, creator: creatorUsername } = req.query;
+
+        const filter = {};
+        if (category && category !== 'all') filter.category = category;
+        if (tag) filter.tags = tag;
+        if (creatorUsername) {
+            const c = await User.findOne({ username: creatorUsername });
+            if (c) filter.creator = c._id;
+        }
+
+        const [docs, total] = await Promise.all([
+            Content.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('creator', 'username displayName avatarUrl role verifiedCreator'),
+            Content.countDocuments(filter),
+        ]);
+
+        const purchases = currentUser
+            ? await Purchase.find({ user: currentUser._id, content: { $in: docs.map(d => d._id) } })
+            : [];
+        const purchasedIds = new Set(purchases.map(p => p.content.toString()));
+
+        const items = docs.map((item) => {
+            const creatorId = item.creator?._id?.toString() || '';
+            const isOwner = currentUser && creatorId === currentUser._id.toString();
+            const purchased = purchasedIds.has(item._id.toString());
+            const unlocked = isOwner || canAccessAll || purchased;
+
+            const files = item.files.map((file, index) => {
+                const isLocked = !unlocked && index > 0;
+                const signedUrl = getUploadsPath(file.url)
+                    ? signMediaUrl(item._id, index)
+                    : file.url;
+                return {
+                    url: isLocked ? null : signedUrl,
+                    type: file.type,
+                    thumbnail: file.thumbnail || null,
+                    price: file.price || null,
+                };
+            });
+
+            return {
+                _id: item._id,
+                title: item.title,
+                description: item.description,
+                creator: {
+                    _id: creatorId,
+                    username: item.creator?.username || 'Anonyme',
+                    displayName: item.creator?.displayName || item.creator?.username || 'Anonyme',
+                    avatarUrl: item.creator?.avatarUrl || '/default-avatar.svg',
+                    verifiedCreator: item.creator?.verifiedCreator || false,
+                },
+                files,
+                tags: item.tags || [],
+                category: item.category || 'all',
+                price: item.price || 0,
+                locked: !unlocked,
+                stats: item.stats,
+                liked: currentUser ? item.likedBy?.includes(currentUser._id) : false,
+            };
+        });
+
+        return res.json({ items, hasMore: skip + docs.length < total, total });
+    } catch (error) {
+        console.error('Feed error:', error);
+        return res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
+// Like / unlike
+router.post('/:id/like', auth, async (req, res) => {
+    try {
+        const item = await Content.findById(req.params.id);
+        if (!item) return res.status(404).json({ message: 'Introuvable.' });
+
+        const userId = req.user.id;
+        const alreadyLiked = item.likedBy.map(id => id.toString()).includes(userId);
+
+        if (alreadyLiked) {
+            item.likedBy.pull(userId);
+            item.stats.likes = Math.max(0, (item.stats.likes || 0) - 1);
+        } else {
+            item.likedBy.push(userId);
+            item.stats.likes = (item.stats.likes || 0) + 1;
+        }
+        await item.save();
+        return res.json({ liked: !alreadyLiked, likes: item.stats.likes });
+    } catch (error) {
+        return res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
 router.post('/', auth, async (req, res) => {
     try {
-        const { title, description, files } = req.body;
-
-        if (!title) {
-            return res.status(400).json({ message: 'Titre requis.' });
-        }
+        const { title, description, files, tags, category, price } = req.body;
 
         const user = await User.findById(req.user.id);
         if (!user) {
             return res.status(401).json({ message: 'Utilisateur invalide.' });
         }
-
-        const content = await Content.create({
-            title,
-            description: description || '',
-            files: Array.isArray(files) ? files : [],
-            creator: user._id,
-        });
-
         const role = normalizeRole(user.role);
         if (role !== 'creator' && role !== 'admin') {
             return res.status(403).json({ message: 'Compte créateur requis.' });
         }
+
+        const content = await Content.create({
+            title: title || `Publication de @${user.username}`,
+            description: description || '',
+            files: Array.isArray(files) ? files : [],
+            tags: Array.isArray(tags) ? tags.slice(0, 20) : [],
+            category: category || 'all',
+            price: typeof price === 'number' ? price : 0,
+            creator: user._id,
+        });
 
         return res.status(201).json({
             _id: content._id,
@@ -196,6 +304,9 @@ router.post('/', auth, async (req, res) => {
                 avatarUrl: user.avatarUrl,
             },
             files: content.files,
+            tags: content.tags,
+            category: content.category,
+            price: content.price,
             stats: content.stats,
         });
     } catch (error) {
