@@ -1,0 +1,33 @@
+name: Daily Photo Seed
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 6h00 UTC = 8h00 Paris — tous les jours
+  workflow_dispatch:        # déclenchement manuel possible
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run daily seed
+        env:
+          PEXELS_API_KEY:    ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY:   ${{ secrets.PIXABAY_API_KEY }}
+          BACKEND_URL:       ${{ secrets.BACKEND_URL }}
+          ADMIN_EMAIL:       ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD:    ${{ secrets.ADMIN_PASSWORD }}
+        run: node scripts/daily-seed.js
+
+      - name: Report
+        if: always()
+        run: echo "Seed completed at $(date)"

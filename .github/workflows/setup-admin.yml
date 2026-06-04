@@ -1,0 +1,23 @@
+name: Setup Seed Admin
+
+on:
+  workflow_dispatch:  # manuel uniquement
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend deps
+        run: cd backend && npm install
+
+      - name: Create admin account
+        env:
+          MONGODB_URI:          ${{ secrets.MONGODB_URI }}
+          SEED_ADMIN_EMAIL:     ${{ secrets.ADMIN_EMAIL }}
+          SEED_ADMIN_PASSWORD:  ${{ secrets.ADMIN_PASSWORD }}
+        run: node backend/scripts/create-admin.js
