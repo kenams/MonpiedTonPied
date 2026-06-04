@@ -9,6 +9,43 @@ const { hasPremiumAccess, normalizeRole } = require('../utils/accessControl');
 
 const router = express.Router();
 const PREVIEW_LIMIT = Number(process.env.PREVIEW_LIMIT || 1);
+
+function formatFeedItem(item, currentUser, purchasedIds, canAccessAll) {
+    const creatorId = item.creator?._id?.toString() || '';
+    const isOwner = currentUser && creatorId === currentUser._id.toString();
+    const purchased = purchasedIds.has(item._id.toString());
+    const unlocked = isOwner || canAccessAll || purchased;
+
+    const files = item.files.map((file, index) => {
+        const signedUrl = getUploadsPath(file.url) ? signMediaUrl(item._id, index) : file.url;
+        return {
+            url: (!unlocked && index > 0) ? null : signedUrl,
+            type: file.type,
+            thumbnail: file.thumbnail || null,
+            price: file.price || null,
+        };
+    });
+
+    return {
+        _id: item._id,
+        title: item.title,
+        description: item.description,
+        creator: {
+            _id: creatorId,
+            username: item.creator?.username || 'Anonyme',
+            displayName: item.creator?.displayName || item.creator?.username || 'Anonyme',
+            avatarUrl: item.creator?.avatarUrl || '/default-avatar.svg',
+            verifiedCreator: item.creator?.verifiedCreator || false,
+        },
+        files,
+        tags: item.tags || [],
+        category: item.category || 'all',
+        price: item.price || 0,
+        locked: !unlocked,
+        stats: item.stats,
+        liked: currentUser ? (item.likedBy || []).map(id => id.toString()).includes(currentUser._id.toString()) : false,
+    };
+}
 const MEDIA_TOKEN_TTL_MS = Number(process.env.MEDIA_TOKEN_TTL_MS || 10 * 60 * 1000);
 
 const hasPurchase = async (user, contentId) => {
@@ -168,7 +205,36 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
 });
 
-// Feed paginated avec catégorie et tags
+// Contenus likés par l'utilisateur
+router.get('/liked', auth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const items = await Content.find({ likedBy: userId })
+            .sort({ createdAt: -1 })
+            .limit(100)
+            .populate('creator', 'username displayName avatarUrl verifiedCreator');
+
+        return res.json({
+            items: items.map(item => ({
+                _id: item._id,
+                title: item.title,
+                files: item.files.map(f => ({ url: f.url, type: f.type, thumbnail: f.thumbnail })),
+                stats: item.stats,
+                creator: {
+                    _id: item.creator?._id,
+                    username: item.creator?.username,
+                    displayName: item.creator?.displayName,
+                    avatarUrl: item.creator?.avatarUrl,
+                },
+                locked: false,
+            }))
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
+// Feed paginated avec catégorie et tags + recommandations IA
 router.get('/feed', optionalAuth, async (req, res) => {
     try {
         const currentUser = req.currentUser || (req.user ? await User.findById(req.user.id) : null);
@@ -176,7 +242,21 @@ router.get('/feed', optionalAuth, async (req, res) => {
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(20, parseInt(req.query.limit) || 10);
         const skip = (page - 1) * limit;
-        const { category, tag, creator: creatorUsername } = req.query;
+        const { category, tag, creator: creatorUsername, recommended } = req.query;
+
+        // Mode recommandations IA (page 1, utilisateur connecté, pas de filtre catégorie)
+        if (recommended === 'true' && currentUser && !category && !tag) {
+            const { getRecommendations } = require('../utils/recommendations');
+            const docs = await getRecommendations(currentUser._id, { limit: limit + skip });
+            const sliced = docs.slice(skip, skip + limit);
+            const purchases = currentUser
+                ? await Purchase.find({ user: currentUser._id, content: { $in: sliced.map(d => d._id) } })
+                : [];
+            const purchasedIds = new Set(purchases.map(p => p.content.toString()));
+
+            const items = sliced.map(item => formatFeedItem(item, currentUser, purchasedIds, canAccessAll));
+            return res.json({ items, hasMore: skip + sliced.length < docs.length, total: docs.length });
+        }
 
         const filter = {};
         if (category && category !== 'all') filter.category = category;
@@ -200,46 +280,7 @@ router.get('/feed', optionalAuth, async (req, res) => {
             : [];
         const purchasedIds = new Set(purchases.map(p => p.content.toString()));
 
-        const items = docs.map((item) => {
-            const creatorId = item.creator?._id?.toString() || '';
-            const isOwner = currentUser && creatorId === currentUser._id.toString();
-            const purchased = purchasedIds.has(item._id.toString());
-            const unlocked = isOwner || canAccessAll || purchased;
-
-            const files = item.files.map((file, index) => {
-                const isLocked = !unlocked && index > 0;
-                const signedUrl = getUploadsPath(file.url)
-                    ? signMediaUrl(item._id, index)
-                    : file.url;
-                return {
-                    url: isLocked ? null : signedUrl,
-                    type: file.type,
-                    thumbnail: file.thumbnail || null,
-                    price: file.price || null,
-                };
-            });
-
-            return {
-                _id: item._id,
-                title: item.title,
-                description: item.description,
-                creator: {
-                    _id: creatorId,
-                    username: item.creator?.username || 'Anonyme',
-                    displayName: item.creator?.displayName || item.creator?.username || 'Anonyme',
-                    avatarUrl: item.creator?.avatarUrl || '/default-avatar.svg',
-                    verifiedCreator: item.creator?.verifiedCreator || false,
-                },
-                files,
-                tags: item.tags || [],
-                category: item.category || 'all',
-                price: item.price || 0,
-                locked: !unlocked,
-                stats: item.stats,
-                liked: currentUser ? item.likedBy?.includes(currentUser._id) : false,
-            };
-        });
-
+        const items = docs.map(item => formatFeedItem(item, currentUser, purchasedIds, canAccessAll));
         return res.json({ items, hasMore: skip + docs.length < total, total });
     } catch (error) {
         console.error('Feed error:', error);

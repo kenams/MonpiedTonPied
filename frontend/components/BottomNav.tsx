@@ -5,11 +5,11 @@ import { Home, Compass, Heart, MessageCircle, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const NAV = [
-  { href: "/",        icon: Home,          label: "Feed" },
-  { href: "/explore", icon: Compass,       label: "Explorer" },
-  { href: "/favorites", icon: Heart,       label: "Favoris" },
-  { href: "/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/profile", icon: User,          label: "Profil" },
+  { href: "/",          icon: Home,           label: "Feed",     public: true },
+  { href: "/explore",   icon: Compass,        label: "Explorer", public: true },
+  { href: "/favorites", icon: Heart,          label: "Favoris",  public: false },
+  { href: "/messages",  icon: MessageCircle,  label: "Messages", public: false },
+  { href: "/profile",   icon: User,           label: "Profil",   public: false },
 ];
 
 export default function BottomNav() {
@@ -28,12 +28,12 @@ export default function BottomNav() {
         paddingTop: "12px",
       }}
     >
-      {NAV.map(({ href, icon: Icon, label }) => {
+      {NAV.map(({ href, icon: Icon, label, public: isPublic }) => {
         const active = pathname === href || (href !== "/" && pathname.startsWith(href));
         return (
           <Link
             key={href}
-            href={user || href === "/" || href === "/explore" ? href : "/auth/login"}
+            href={user || isPublic ? href : "/auth/login"}
             className={`flex flex-col items-center gap-1 min-w-[44px] transition-all ${
               active ? "text-[var(--rose)]" : "text-white/40 hover:text-white/70"
             }`}
